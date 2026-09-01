@@ -269,6 +269,7 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
     <div style="width:100%;display:flex;flex-direction:column;gap:14px">
       <button class="btn btn-coral" style="padding:20px;font-size:1.15rem" onclick="goSetup()">🎮 Create Game</button>
       <button class="btn btn-teal" style="padding:20px;font-size:1.15rem" onclick="goJoin()">🚀 Join Game</button>
+      <button class="btn btn-ghost" style="padding:14px;font-size:1rem" onclick="showScreen('howtoplay')">📖 How to Play</button>
     </div>
     <div class="text-dim text-center" style="font-size:0.95rem;max-width:280px;line-height:1.5">Race to fill categories with words starting with the same letter!</div>
   </div>
@@ -330,21 +331,101 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
     <div class="hbar-title">Join Game</div>
   </div>
   <div class="inner" style="gap:14px">
-    <div class="card">
-      <label>Room Code</label>
-      <input type="text" id="join-code" placeholder="ABCD" maxlength="4"
-        oninput="this.value=this.value.toUpperCase()"
-        style="font-family:'Space Mono',monospace;font-size:1.8rem;letter-spacing:8px;text-align:center">
+    <!-- Game-in-progress blocker (shown instead of the form) -->
+    <div id="join-in-progress" hidden style="display:flex;flex-direction:column;gap:14px">
+      <div class="card text-center" style="border:2px solid var(--coral);padding:30px 20px">
+        <div style="font-size:3rem;margin-bottom:12px">🔒</div>
+        <div class="fw800" style="font-size:1.2rem;margin-bottom:8px">Game in Progress</div>
+        <div class="text-dim" style="line-height:1.5">Room <span id="inprogress-code" class="mono text-yellow"></span> has already started. You can't join mid-game.</div>
+      </div>
+      <button class="btn btn-ghost" onclick="showScreen('home')">← Back to Home</button>
     </div>
-    <div class="card">
-      <label>Your Name</label>
-      <input type="text" id="join-name" placeholder="Enter your name" maxlength="20">
-      <div class="gap"></div>
-      <label>Your Avatar</label>
-      <div class="avatar-grid mb8" id="join-emoji-grid"></div>
-      <div class="avatar-grid" id="join-color-grid"></div>
+    <!-- Normal join form -->
+    <div id="join-form">
+      <div class="card mb14">
+        <label>Room Code</label>
+        <input type="text" id="join-code" placeholder="ABCD" maxlength="4"
+          oninput="this.value=this.value.toUpperCase()"
+          style="font-family:'Space Mono',monospace;font-size:1.8rem;letter-spacing:8px;text-align:center">
+      </div>
+      <div class="card mb14">
+        <label>Your Name</label>
+        <input type="text" id="join-name" placeholder="Enter your name" maxlength="20">
+        <div class="gap"></div>
+        <label>Your Avatar</label>
+        <div class="avatar-grid mb8" id="join-emoji-grid"></div>
+        <div class="avatar-grid" id="join-color-grid"></div>
+      </div>
+      <button class="btn btn-teal" onclick="joinRoom()">Join Game →</button>
     </div>
-    <button class="btn btn-teal" onclick="joinRoom()">Join Game →</button>
+  </div>
+</div>
+
+<!-- ══ HOW TO PLAY ══ -->
+<div class="screen" id="screen-howtoplay" hidden style="align-items:center">
+  <div class="hbar">
+    <button class="back-btn" onclick="showScreen('home')">←</button>
+    <div class="hbar-title">How to Play</div>
+  </div>
+  <div class="inner" style="gap:14px;max-width:420px">
+
+    <div class="card" style="border-left:4px solid var(--coral)">
+      <div style="font-size:1.5rem;margin-bottom:6px">🎯 The Goal</div>
+      <div class="text-dim" style="line-height:1.6">Fill every category with a word starting with the round's letter — faster and more uniquely than your opponents.</div>
+    </div>
+
+    <div class="card">
+      <div class="fw800 mb14" style="font-size:1rem;letter-spacing:1px;text-transform:uppercase;color:var(--orange)">How a Round Works</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">1</div>
+          <div><div class="fw700">A letter is revealed</div><div class="text-dim fs-sm" style="margin-top:2px">Random draw, or all players secretly nominate a letter and one is chosen from the pool.</div></div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--coral);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">2</div>
+          <div><div class="fw700">Race to fill the categories</div><div class="text-dim fs-sm" style="margin-top:2px">Type answers for every category — all must start with the round's letter. The timer counts down.</div></div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">3</div>
+          <div><div class="fw700">Scoring</div><div class="text-dim fs-sm" style="margin-top:2px">Answers are scored automatically when time's up or everyone submits.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="fw800 mb14" style="font-size:1rem;letter-spacing:1px;text-transform:uppercase;color:var(--yellow)">Scoring</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="mono text-mint fw800" style="font-size:1.2rem;min-width:40px">10pt</div>
+          <div class="text-dim fs-sm">Valid answer that nobody else gave</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="mono text-yellow fw800" style="font-size:1.2rem;min-width:40px">5pt</div>
+          <div class="text-dim fs-sm">Valid answer but someone else wrote something very similar</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="mono fw800" style="font-size:1.2rem;min-width:40px;color:var(--dim)">0pt</div>
+          <div class="text-dim fs-sm">Blank, wrong starting letter, or ruled invalid</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="border-left:4px solid var(--purple)">
+      <div style="font-size:1.3rem;margin-bottom:6px">⚠️ Challenges</div>
+      <div class="text-dim" style="line-height:1.6">Spot a dodgy answer? Tap <strong style="color:var(--coral)">Flag</strong> on the review screen. The host rules it valid (5pt) or invalid (0pt).</div>
+    </div>
+
+    <div class="card" style="border-left:4px solid var(--mint)">
+      <div style="font-size:1.3rem;margin-bottom:6px">💡 Tips</div>
+      <div class="text-dim" style="line-height:1.6;display:flex;flex-direction:column;gap:6px">
+        <div>• Hit <strong style="color:#fff">Submit</strong> early to lock in your answers — you'll see how many others have submitted.</div>
+        <div>• Obscure-but-valid answers score the same as common ones, as long as nobody else wrote the same thing.</div>
+        <div>• In Pick mode, your letter nomination is secret — try to pick one that's easy for you and hard for others!</div>
+      </div>
+    </div>
+
+    <button class="btn btn-coral" style="max-width:420px;margin-top:4px" onclick="showScreen('home')">Got it — Let's Play! 🎮</button>
+    <div style="height:20px"></div>
   </div>
 </div>
 
@@ -728,6 +809,9 @@ function showScreen(name) {
 function goSetup() { showScreen('setup'); }
 function goJoin(prefillCode) {
   showScreen('join');
+  // Reset state: show form, hide in-progress card
+  document.getElementById('join-form').hidden = false;
+  document.getElementById('join-in-progress').hidden = true;
   if (prefillCode) {
     document.getElementById('join-code').value = prefillCode.toUpperCase();
   }
@@ -826,7 +910,13 @@ async function joinRoom() {
       inp.classList.add('shake');
       return;
     }
-    if (room.status !== 'lobby') { toast('Game already in progress', 3000, true); loading(false); return; }
+    if (room.status !== 'lobby') {
+      loading(false);
+      document.getElementById('join-form').hidden = true;
+      document.getElementById('join-in-progress').hidden = false;
+      document.getElementById('inprogress-code').textContent = code;
+      return;
+    }
 
     const { data: existing } = await db.from('letter_frenzy_players').select('id').eq('room_id', room.id);
     if (existing && existing.length >= room.max_players) { toast('Room is full'); loading(false); return; }
@@ -863,7 +953,20 @@ async function subscribeRoom(roomId) {
       onRoomChange(payload.new);
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'letter_frenzy_players', filter: `room_id=eq.${roomId}` }, async (payload) => {
+      const wasHost = payload.old?.is_host === true;
+      const isDelete = payload.eventType === 'DELETE';
       await refreshPlayers();
+      // If host just left and we're now the oldest remaining player, promote ourselves
+      if (isDelete && wasHost && !S.isHost && S.players.length > 0) {
+        const oldest = S.players[0]; // ordered by created_at
+        if (oldest.id === S.playerId) {
+          await db.from('letter_frenzy_players').update({ is_host: true }).eq('id', S.playerId);
+          S.isHost = true;
+          toast('You are now the host 👑');
+          // Refresh the current screen's host controls
+          onPromotedToHost();
+        }
+      }
       onPlayersChange();
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'letter_frenzy_answers', filter: `room_id=eq.${roomId}` }, async (payload) => {
@@ -907,6 +1010,30 @@ function onAnswersChange() {
     if (S.isHost) checkAllSubmitted();
   }
   if (sc === 'review') renderReview();
+}
+
+function onPromotedToHost() {
+  // Refresh host controls on whichever screen we're currently on
+  const sc = S.currentScreen;
+  if (sc === 'lobby') {
+    document.getElementById('lobby-host-controls').hidden = false;
+    document.getElementById('lobby-waiting').hidden = true;
+    updateStartBtn();
+  }
+  if (sc === 'playing') {
+    document.getElementById('play-host-end').hidden = false;
+  }
+  if (sc === 'review') {
+    document.getElementById('review-host-btn').hidden = false;
+    document.getElementById('review-wait').hidden = true;
+    const isLast = S.room?.current_round >= S.room?.total_rounds;
+    document.getElementById('next-round-btn').textContent = isLast ? 'End Game 🏆' : 'Next Round →';
+    document.getElementById('end-early-btn').hidden = isLast;
+  }
+  if (sc === 'final') {
+    document.getElementById('final-host-btn').hidden = false;
+    document.getElementById('final-wait').hidden = true;
+  }
 }
 
 async function navigateToRoomStatus(status) {
