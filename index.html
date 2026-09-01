@@ -157,7 +157,10 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
 /* ── Toast ── */
 #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 99; pointer-events: none; }
 .toast-msg { background: rgba(30,25,80,.95); border: 1.5px solid rgba(255,255,255,.15); color: #fff; padding: 12px 20px; border-radius: 99px; font-size: .9rem; font-weight: 600; backdrop-filter: blur(8px); animation: toastIn .3s ease; margin-bottom: 8px; white-space: nowrap; }
+.toast-msg.toast-error { background: rgba(180,30,40,.97); border-color: rgba(255,100,100,.4); }
 @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-7px)} 40%,80%{transform:translateX(7px)} }
+.shake { animation: shake .4s ease; }
 
 /* ── Loading overlay ── */
 #loading { position: fixed; inset: 0; z-index: 99; background: rgba(10,9,26,.9); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
@@ -348,7 +351,10 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
     <div class="text-center mb20" style="padding-top:10px">
       <div class="text-dim fs-sm fw700 mb4">ROOM CODE</div>
       <div class="room-code" id="lobby-code" onclick="copyCode()" style="cursor:pointer" title="Tap to copy">XXXX</div>
-      <div class="text-dim fs-sm mt8">Tap to copy · Share with friends</div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:12px">
+        <button class="btn btn-ghost btn-sm" onclick="copyCode()">📋 Copy Code</button>
+        <button class="btn btn-ghost btn-sm" onclick="shareLink()">🔗 Share Link</button>
+      </div>
     </div>
     <div class="card mb8">
       <div class="row mb14">
@@ -365,11 +371,13 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
     </div>
     <div id="lobby-host-controls" hidden>
       <button class="btn btn-coral" id="start-btn" onclick="startGame()" disabled>Waiting for players…</button>
+      <button class="btn btn-danger" style="margin-top:10px" onclick="cancelGame()">✕ Cancel Game</button>
     </div>
     <div id="lobby-waiting" hidden>
       <div class="card text-center">
         <div class="mb8">🕐</div>
         <div class="fw700">Waiting for host to start…</div>
+        <button class="btn btn-danger" style="margin-top:14px" onclick="leaveGame()">← Leave Game</button>
       </div>
     </div>
   </div>
@@ -426,6 +434,9 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
     <div id="answer-fields"></div>
     <div class="text-dim fs-sm text-center mb14" id="submit-status"></div>
     <button class="btn btn-orange" id="submit-btn" onclick="submitAnswers()">Submit All ✓</button>
+    <div id="play-host-end" hidden style="margin-top:10px;text-align:center">
+      <button class="btn btn-danger btn-sm" style="width:auto" onclick="endGameEarly()">⏹ End Game</button>
+    </div>
     <div style="height:20px"></div>
   </div>
 </div>
@@ -444,6 +455,7 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
     <div id="review-body"></div>
     <div id="review-host-btn" hidden style="margin-top:14px">
       <button class="btn btn-coral" id="next-round-btn" onclick="advanceGame()">Next Round →</button>
+      <button class="btn btn-danger btn-sm" id="end-early-btn" style="margin-top:10px;width:auto" onclick="endGameEarly()">⏹ End Game Early</button>
     </div>
     <div id="review-wait" hidden class="card text-center">
       <div class="fw700 text-dim">Waiting for host to continue…</div>
@@ -505,6 +517,11 @@ window.addEventListener('DOMContentLoaded', () => {
   buildAvatarGrids('setup');
   buildAvatarGrids('join');
   buildSetupUI();
+  // Pre-fill join code from URL param (?join=XXXX) — only if no active session
+  const joinParam = new URLSearchParams(location.search).get('join');
+  if (joinParam && joinParam.length === 4 && !sessionStorage.getItem('lf_pid')) {
+    goJoin(joinParam);
+  }
   tryReconnect();
 });
 
@@ -695,7 +712,12 @@ function showScreen(name) {
 }
 
 function goSetup() { showScreen('setup'); }
-function goJoin()  { showScreen('join'); }
+function goJoin(prefillCode) {
+  showScreen('join');
+  if (prefillCode) {
+    document.getElementById('join-code').value = prefillCode.toUpperCase();
+  }
+}
 
 // ═══════════════════════════════════════════
 // RECONNECT
@@ -781,8 +803,16 @@ async function joinRoom() {
   loading(true);
   try {
     const { data: room, error: re } = await db.from('letter_frenzy_rooms').select('*').eq('code', code).single();
-    if (re || !room) { toast('Room not found'); loading(false); return; }
-    if (room.status !== 'lobby') { toast('Game already in progress'); loading(false); return; }
+    if (re || !room) {
+      toast('Room not found — check your code', 3000, true);
+      loading(false);
+      const inp = document.getElementById('join-code');
+      inp.classList.remove('shake');
+      void inp.offsetWidth; // force reflow to restart animation
+      inp.classList.add('shake');
+      return;
+    }
+    if (room.status !== 'lobby') { toast('Game already in progress', 3000, true); loading(false); return; }
 
     const { data: existing } = await db.from('letter_frenzy_players').select('id').eq('room_id', room.id);
     if (existing && existing.length >= room.max_players) { toast('Room is full'); loading(false); return; }
@@ -1136,6 +1166,7 @@ async function showPlaying() {
   const submitted = isAlreadySubmitted();
   document.getElementById('submit-btn').disabled = submitted;
   if (submitted) document.getElementById('submit-btn').textContent = '✅ Submitted';
+  document.getElementById('play-host-end').hidden = !S.isHost;
   renderSubmitStatus();
   startTimer();
 }
@@ -1371,6 +1402,7 @@ async function showReview() {
   if (S.isHost) {
     const isLast = S.room?.current_round >= S.room?.total_rounds;
     document.getElementById('next-round-btn').textContent = isLast ? 'End Game 🏆' : 'Next Round →';
+    document.getElementById('end-early-btn').hidden = isLast; // "End Early" redundant on last round
   }
   renderReview();
 }
@@ -1583,11 +1615,66 @@ function loading(show) {
   document.getElementById('loading').hidden = !show;
 }
 
+// ═══════════════════════════════════════════
+// LOBBY CANCEL / LEAVE
+// ═══════════════════════════════════════════
+async function cancelGame() {
+  if (!S.isHost) return;
+  loading(true);
+  try {
+    await db.from('letter_frenzy_players').delete().eq('room_id', S.roomId);
+    await db.from('letter_frenzy_rooms').delete().eq('id', S.roomId);
+  } catch(e) { console.error(e); }
+  if (S.channel) { await db.removeChannel(S.channel); S.channel = null; }
+  clearSession();
+  S.playerId = null; S.roomId = null; S.roomCode = null; S.isHost = false;
+  S.room = null; S.players = []; S.answers = [];
+  loading(false);
+  showScreen('home');
+}
+
+async function leaveGame() {
+  loading(true);
+  try {
+    if (S.playerId) await db.from('letter_frenzy_players').delete().eq('id', S.playerId);
+  } catch(e) { console.error(e); }
+  if (S.channel) { await db.removeChannel(S.channel); S.channel = null; }
+  clearSession();
+  S.playerId = null; S.roomId = null; S.roomCode = null; S.isHost = false;
+  S.room = null; S.players = []; S.answers = [];
+  loading(false);
+  showScreen('home');
+}
+
+// ═══════════════════════════════════════════
+// END GAME EARLY (HOST)
+// ═══════════════════════════════════════════
+async function endGameEarly() {
+  if (!S.isHost) return;
+  loading(true);
+  try {
+    await db.from('letter_frenzy_rooms').update({ status: 'final' }).eq('id', S.roomId);
+  } catch(e) { console.error(e); toast('Error ending game'); }
+  loading(false);
+}
+
+// ═══════════════════════════════════════════
+// SHARE LINK
+// ═══════════════════════════════════════════
+function shareLink() {
+  const url = `${location.origin}${location.pathname}?join=${S.roomCode}`;
+  if (navigator.share) {
+    navigator.share({ title: 'Join my Letter Frenzy game!', text: `Use code ${S.roomCode} to join:`, url });
+  } else {
+    navigator.clipboard?.writeText(url).then(() => toast('Invite link copied! 🔗'));
+  }
+}
+
 let _toastTimer;
-function toast(msg, duration = 2500) {
+function toast(msg, duration = 2500, isError = false) {
   const el = document.getElementById('toast');
   const d = document.createElement('div');
-  d.className = 'toast-msg';
+  d.className = 'toast-msg' + (isError ? ' toast-error' : '');
   d.textContent = msg;
   el.appendChild(d);
   setTimeout(() => d.remove(), duration);
