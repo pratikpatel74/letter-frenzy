@@ -179,11 +179,24 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
 .pick-dot.done .av-sm { opacity: 1; }
 .pick-dot.done .pick-label { color: var(--mint); }
 
-/* ── Challenge queue ── */
-.challenge-queue { background: rgba(255,95,109,.1); border: 1.5px solid var(--coral); border-radius: var(--r); padding: 16px; margin-bottom: 14px; }
-.challenge-item { display: flex; flex-direction: column; gap: 8px; }
-.challenge-item + .challenge-item { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.1); }
-.challenge-actions { display: flex; gap: 8px; }
+/* ── Challenge / Vote UI ── */
+.vote-panel { background: rgba(255,95,109,.07); border: 1px solid rgba(255,95,109,.25); border-radius: var(--r-sm); padding: 10px 12px; margin-top: 8px; }
+.vote-timer-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.vote-timer { font-family: 'Space Mono', monospace; font-size: .8rem; color: var(--coral); }
+.vote-btns { display: flex; gap: 8px; }
+.vote-btn { flex: 1; padding: 8px 6px; border-radius: var(--r-sm); border: 1.5px solid; font-size: .82rem; font-weight: 700; cursor: pointer; font-family: 'Nunito', sans-serif; transition: all .15s; background: transparent; }
+.vote-btn.valid { border-color: var(--mint); color: var(--mint); }
+.vote-btn.valid:hover, .vote-btn.valid.chosen { background: rgba(56,239,125,.18); }
+.vote-btn.invalid { border-color: var(--coral); color: var(--coral); }
+.vote-btn.invalid:hover, .vote-btn.invalid.chosen { background: rgba(255,95,109,.18); }
+.vote-btn:disabled { opacity: .45; cursor: not-allowed; }
+.vote-tally { display: flex; gap: 10px; font-size: .78rem; margin-top: 6px; flex-wrap: wrap; }
+.veto-row { display: flex; align-items: center; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.08); flex-wrap: wrap; }
+.veto-btn { padding: 4px 10px; border-radius: 6px; border: 1.5px solid; font-size: .75rem; font-weight: 700; cursor: pointer; font-family: 'Nunito', sans-serif; transition: all .15s; background: transparent; }
+.veto-btn.valid { border-color: var(--mint); color: var(--mint); }
+.veto-btn.valid:hover { background: rgba(56,239,125,.18); }
+.veto-btn.invalid { border-color: var(--coral); color: var(--coral); }
+.veto-btn.invalid:hover { background: rgba(255,95,109,.18); }
 
 /* ── Category tags ── */
 .cat-tag { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--card2); border-radius: var(--r-sm); margin-bottom: 6px; }
@@ -411,8 +424,8 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
     </div>
 
     <div class="card" style="border-left:4px solid var(--purple)">
-      <div style="font-size:1.3rem;margin-bottom:6px">⚠️ Challenges</div>
-      <div class="text-dim" style="line-height:1.6">Spot a dodgy answer? Tap <strong style="color:var(--coral)">Flag</strong> on the review screen. The host rules it valid (5pt) or invalid (0pt).</div>
+      <div style="font-size:1.3rem;margin-bottom:6px">⚠️ Challenges &amp; Voting</div>
+      <div class="text-dim" style="line-height:1.6">Spot a dodgy answer? Tap <strong style="color:var(--coral)">Flag</strong> on the review screen. Everyone (except the answer's owner) gets 30 seconds to vote 👍 valid or 👎 invalid. Majority wins — the host breaks ties and can override any vote at any time.</div>
     </div>
 
     <div class="card" style="border-left:4px solid var(--mint)">
@@ -570,6 +583,18 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
 
 </div><!-- #app -->
 
+<!-- ══ TIE-BREAK MODAL ══ -->
+<div id="tiebreak-modal" hidden style="position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;padding:20px">
+  <div class="card" style="max-width:380px;width:100%;border:2px solid var(--orange)">
+    <div class="fw800 mb4" style="color:var(--orange);font-size:1.1rem">⚖️ It's a Tie — You Decide!</div>
+    <div class="text-dim fs-sm mb14" id="tiebreak-desc">Equal votes. As host, cast the deciding vote.</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" style="border-color:var(--mint);color:var(--mint)" onclick="hostTieBreak('approved')">✓ Valid (5pt)</button>
+      <button class="btn btn-ghost" style="border-color:var(--coral);color:var(--coral)" onclick="hostTieBreak('rejected')">✗ Invalid (0pt)</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 // ═══════════════════════════════════════════
@@ -595,6 +620,7 @@ let S = {
   timerInterval: null, timerTimeout: null,
   channel: null, currentScreen: 'home',
   revealCountdown: null,
+  voteCheckInterval: null, pendingTieBreak: null,
 };
 
 // ═══════════════════════════════════════════
@@ -803,6 +829,16 @@ function removeCat(i) {
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.hidden = true);
   document.getElementById('screen-' + name).hidden = false;
+  // Stop vote-check interval when leaving review
+  if (name !== 'review' && S.voteCheckInterval) {
+    clearInterval(S.voteCheckInterval);
+    S.voteCheckInterval = null;
+  }
+  // Close tie-break modal on any navigation
+  if (name !== 'review') {
+    document.getElementById('tiebreak-modal').hidden = true;
+    S.pendingTieBreak = null;
+  }
   S.currentScreen = name;
 }
 
@@ -1009,7 +1045,10 @@ function onAnswersChange() {
     renderSubmitStatus();
     if (S.isHost) checkAllSubmitted();
   }
-  if (sc === 'review') renderReview();
+  if (sc === 'review') {
+    renderReview();
+    if (S.isHost) checkAndResolveChallenges();
+  }
 }
 
 function onPromotedToHost() {
@@ -1029,6 +1068,15 @@ function onPromotedToHost() {
     const isLast = S.room?.current_round >= S.room?.total_rounds;
     document.getElementById('next-round-btn').textContent = isLast ? 'End Game 🏆' : 'Next Round →';
     document.getElementById('end-early-btn').hidden = isLast;
+    updateNextRoundBtn();
+    // Start vote-check interval if not already running
+    if (!S.voteCheckInterval) {
+      S.voteCheckInterval = setInterval(() => {
+        if (S.currentScreen !== 'review') return;
+        updateVoteTimers();
+        if (S.isHost) checkAndResolveChallenges();
+      }, 1000);
+    }
   }
   if (sc === 'final') {
     document.getElementById('final-host-btn').hidden = false;
@@ -1540,6 +1588,14 @@ function areDuplicates(a, b) {
 // ═══════════════════════════════════════════
 async function showReview() {
   stopTimer();
+  // Start vote-check interval (updates countdowns + auto-resolves on host)
+  if (S.voteCheckInterval) clearInterval(S.voteCheckInterval);
+  S.voteCheckInterval = setInterval(() => {
+    if (S.currentScreen !== 'review') return;
+    updateVoteTimers();
+    if (S.isHost) checkAndResolveChallenges();
+  }, 1000);
+
   showScreen('review');
   // Fresh fetch so we always have scored answers and updated player totals
   await Promise.all([refreshPlayers(), refreshAnswers()]);
@@ -1549,7 +1605,7 @@ async function showReview() {
   if (S.isHost) {
     const isLast = S.room?.current_round >= S.room?.total_rounds;
     document.getElementById('next-round-btn').textContent = isLast ? 'End Game 🏆' : 'Next Round →';
-    document.getElementById('end-early-btn').hidden = isLast; // "End Early" redundant on last round
+    document.getElementById('end-early-btn').hidden = isLast;
   }
   renderReview();
 }
@@ -1561,6 +1617,7 @@ function renderReview() {
 
   const cats = getCats();
   const body = document.getElementById('review-body');
+  const now = Date.now();
 
   body.innerHTML = cats.map(cat => {
     const catAnswers = S.answers.filter(a => a.category === cat);
@@ -1574,21 +1631,80 @@ function renderReview() {
       const isMine = ans.player_id === S.playerId;
       const isChall = ans.is_challenged;
       const challStatus = ans.challenge_status;
+
       let cardCls = 'answer-card';
       if (isChall && !challStatus) cardCls += ' challenged';
       if (challStatus === 'approved') cardCls += ' approved';
       if (challStatus === 'rejected') cardCls += ' rejected';
 
       const canChallenge = !isMine && !isChall && text && !isWrong && score > 0;
-      const challengeHtml = canChallenge
-        ? `<button class="challenge-btn" onclick="challengeAnswer('${ans.id}')">⚠️ Flag</button>`
-        : isChall && !challStatus ? `<span class="text-coral fs-sm">Flagged</span>` : '';
+      let rightEl = '';
+      if (canChallenge) {
+        rightEl = `<button class="challenge-btn" onclick="challengeAnswer('${ans.id}')">⚠️ Flag</button>`;
+      } else if (challStatus === 'approved') {
+        rightEl = `<span class="text-mint fs-sm fw700">✓ Valid</span>`;
+      } else if (challStatus === 'rejected') {
+        rightEl = `<span class="text-coral fs-sm fw700">✗ Invalid</span>`;
+      }
 
-      return `<div class="${cardCls}" id="ac-${ans.id}">
-        <div class="av-sm" style="background:${player?.avatar_color||'#888'}">${player?.avatar_emoji||'?'}</div>
-        <div class="ans-text ${isWrong ? 'wrong' : ''}">${text ? esc(text) : '<em style="opacity:.4">blank</em>'}</div>
-        <div class="ans-score ${scoreClass}">${score}pt</div>
-        ${challengeHtml}
+      // Build vote panel for pending challenges
+      let votePanel = '';
+      if (isChall && !challStatus) {
+        const votes = ans.challenge_votes || {};
+        const myVote = votes[S.playerId];
+        const eligibleCount = S.players.filter(p => p.id !== ans.player_id).length;
+        const totalVotes = Object.keys(votes).length;
+        const validVotes = Object.values(votes).filter(v => v === 'valid').length;
+        const invalidVotes = Object.values(votes).filter(v => v === 'invalid').length;
+        const timerEnd = ans.vote_timer_end ? new Date(ans.vote_timer_end).getTime() : 0;
+        const remaining = Math.max(0, Math.ceil((timerEnd - now) / 1000));
+
+        let voteContent = '';
+        if (isMine) {
+          voteContent = `<div class="text-dim fs-sm">Your answer is being voted on</div>`;
+        } else if (myVote) {
+          const voteColor = myVote === 'valid' ? 'var(--mint)' : 'var(--coral)';
+          voteContent = `<div class="fs-sm" style="color:${voteColor};font-weight:700">You voted: ${myVote === 'valid' ? '👍 valid' : '👎 invalid'}</div>`;
+        } else {
+          voteContent = `<div class="vote-btns">
+            <button class="vote-btn valid" onclick="castVote('${ans.id}','valid')">👍 Valid</button>
+            <button class="vote-btn invalid" onclick="castVote('${ans.id}','invalid')">👎 Invalid</button>
+          </div>`;
+        }
+
+        // Show tally if I've voted, or I'm host, or timer expired
+        const showTally = myVote || S.isHost || remaining <= 0;
+        const tallyHtml = showTally ? `<div class="vote-tally">
+          <span class="text-mint">👍 ${validVotes}</span>
+          <span class="text-coral">👎 ${invalidVotes}</span>
+          <span class="text-dim">(${totalVotes}/${eligibleCount} voted)</span>
+        </div>` : '';
+
+        const vetoHtml = S.isHost ? `<div class="veto-row">
+          <span class="text-dim" style="font-size:.75rem">Override:</span>
+          <button class="veto-btn valid" onclick="hostVeto('${ans.id}','approved')">✓ Force Valid</button>
+          <button class="veto-btn invalid" onclick="hostVeto('${ans.id}','rejected')">✗ Force Invalid</button>
+        </div>` : '';
+
+        votePanel = `<div class="vote-panel">
+          <div class="vote-timer-row">
+            <span class="text-coral fw700" style="font-size:.8rem">⚠️ Vote!</span>
+            <span class="vote-timer" id="vt-${ans.id}">${remaining > 0 ? remaining + 's' : 'Resolving…'}</span>
+          </div>
+          ${voteContent}
+          ${tallyHtml}
+          ${vetoHtml}
+        </div>`;
+      }
+
+      return `<div class="${cardCls}" id="ac-${ans.id}" style="flex-direction:column;align-items:stretch;gap:0">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="av-sm" style="background:${player?.avatar_color||'#888'}">${player?.avatar_emoji||'?'}</div>
+          <div class="ans-text ${isWrong ? 'wrong' : ''}" style="flex:1">${text ? esc(text) : '<em style="opacity:.4">blank</em>'}</div>
+          <div class="ans-score ${scoreClass}">${score}pt</div>
+          ${rightEl}
+        </div>
+        ${votePanel}
       </div>`;
     }).join('') || '<div class="text-dim fs-sm">No answers</div>';
 
@@ -1598,50 +1714,112 @@ function renderReview() {
     </div>`;
   }).join('');
 
-  // Challenge queue (host only)
-  const pending = S.answers.filter(a => a.is_challenged && !a.challenge_status);
-  const cq = document.getElementById('challenge-queue');
-  const ci = document.getElementById('challenge-items');
-  if (S.isHost && pending.length) {
-    cq.hidden = false;
-    ci.innerHTML = pending.map(ans => {
-      const player = S.players.find(p => p.id === ans.player_id);
-      return `<div class="challenge-item">
-        <div class="fw700">${player?.avatar_emoji||''} ${esc(player?.name||'?')} — "<em>${esc(ans.answer_text)}</em>" (${ans.category})</div>
-        <div class="text-dim fs-sm">Challenged by another player</div>
-        <div class="challenge-actions">
-          <button class="btn btn-ghost btn-sm" style="background:rgba(56,239,125,.15);color:var(--mint)" onclick="ruleChallenge('${ans.id}','approved')">✓ Valid (5pt)</button>
-          <button class="btn btn-ghost btn-sm" style="background:rgba(255,95,109,.15);color:var(--coral)" onclick="ruleChallenge('${ans.id}','rejected')">✗ Invalid (0pt)</button>
-        </div>
-      </div>`;
-    }).join('');
-  } else {
-    cq.hidden = true;
-  }
+  // Hide old challenge queue (voting is now inline)
+  document.getElementById('challenge-queue').hidden = true;
+
+  updateNextRoundBtn();
 }
 
 async function challengeAnswer(answerId) {
-  await db.from('letter_frenzy_answers').update({ is_challenged: true }).eq('id', answerId);
-  toast('Answer flagged for host review');
+  const timerEnd = new Date(Date.now() + 30000).toISOString();
+  await db.from('letter_frenzy_answers').update({
+    is_challenged: true,
+    challenge_votes: {},
+    vote_timer_end: timerEnd
+  }).eq('id', answerId);
+  toast('Answer flagged — 30s to vote!');
 }
 
-async function ruleChallenge(answerId, status) {
-  const newScore = status === 'approved' ? 5 : 0;
+async function castVote(answerId, vote) {
   const ans = S.answers.find(a => a.id === answerId);
-  if (!ans) return;
+  if (!ans || ans.challenge_status) return;
+  if (ans.player_id === S.playerId) return; // can't vote on own answer
+  const votes = { ...(ans.challenge_votes || {}) };
+  if (votes[S.playerId]) return; // already voted
+  votes[S.playerId] = vote;
+  await db.from('letter_frenzy_answers').update({ challenge_votes: votes }).eq('id', answerId);
+}
 
-  // Update answer
-  await db.from('letter_frenzy_answers').update({ challenge_status: status, round_score: newScore }).eq('id', answerId);
+async function hostVeto(answerId, verdict) {
+  if (!S.isHost) return;
+  await resolveChallenge(answerId, verdict);
+}
 
-  // Adjust player total score
-  const player = S.players.find(p => p.id === ans.player_id);
-  if (player) {
-    const diff = newScore - (ans.round_score || 0);
-    if (diff !== 0) {
-      await db.from('letter_frenzy_players').update({ total_score: player.total_score + diff }).eq('id', player.id);
+async function resolveChallenge(answerId, verdict) {
+  const ans = S.answers.find(a => a.id === answerId);
+  if (!ans || ans.challenge_status) return;
+  const newScore = verdict === 'approved' ? 5 : 0;
+  const oldScore = ans.round_score || 0;
+  await db.from('letter_frenzy_answers').update({ challenge_status: verdict, round_score: newScore }).eq('id', answerId);
+  const diff = newScore - oldScore;
+  if (diff !== 0) {
+    const player = S.players.find(p => p.id === ans.player_id);
+    if (player) {
+      await db.from('letter_frenzy_players').update({ total_score: (player.total_score || 0) + diff }).eq('id', player.id);
     }
   }
-  toast(status === 'approved' ? 'Answer ruled valid (5pt)' : 'Answer ruled invalid (0pt)');
+  // Close tie-break modal if this was the pending one
+  if (S.pendingTieBreak === answerId) {
+    S.pendingTieBreak = null;
+    document.getElementById('tiebreak-modal').hidden = true;
+  }
+  toast(verdict === 'approved' ? '✓ Valid (5pt)' : '✗ Invalid (0pt)');
+}
+
+function showTieBreak(ans) {
+  if (S.pendingTieBreak === ans.id) return;
+  S.pendingTieBreak = ans.id;
+  const player = S.players.find(p => p.id === ans.player_id);
+  document.getElementById('tiebreak-desc').textContent =
+    `${player?.avatar_emoji || ''} ${player?.name || '?'}'s answer "${ans.answer_text}" — equal votes. Your call.`;
+  document.getElementById('tiebreak-modal').hidden = false;
+}
+
+async function hostTieBreak(verdict) {
+  if (!S.pendingTieBreak) return;
+  await resolveChallenge(S.pendingTieBreak, verdict);
+}
+
+function checkAndResolveChallenges() {
+  if (!S.isHost) return;
+  const pending = S.answers.filter(a => a.is_challenged && !a.challenge_status);
+  for (const ans of pending) {
+    if (!ans.vote_timer_end) continue;
+    const timerExpired = Date.now() >= new Date(ans.vote_timer_end).getTime();
+    const eligibleCount = S.players.filter(p => p.id !== ans.player_id).length;
+    const votes = ans.challenge_votes || {};
+    const allVoted = Object.keys(votes).length >= eligibleCount;
+    if (!timerExpired && !allVoted) continue;
+    const validVotes = Object.values(votes).filter(v => v === 'valid').length;
+    const invalidVotes = Object.values(votes).filter(v => v === 'invalid').length;
+    if (validVotes > invalidVotes) {
+      resolveChallenge(ans.id, 'approved');
+    } else if (invalidVotes > validVotes) {
+      resolveChallenge(ans.id, 'rejected');
+    } else {
+      // Tie — host decides
+      showTieBreak(ans);
+    }
+  }
+}
+
+function updateNextRoundBtn() {
+  if (!S.isHost) return;
+  const pending = S.answers.filter(a => a.is_challenged && !a.challenge_status);
+  const btn = document.getElementById('next-round-btn');
+  if (!btn) return;
+  btn.disabled = pending.length > 0;
+  btn.title = pending.length > 0 ? `${pending.length} challenge(s) still pending` : '';
+}
+
+function updateVoteTimers() {
+  S.answers.filter(a => a.is_challenged && !a.challenge_status && a.vote_timer_end).forEach(ans => {
+    const el = document.getElementById('vt-' + ans.id);
+    if (!el) return;
+    const remaining = Math.max(0, Math.ceil((new Date(ans.vote_timer_end).getTime() - Date.now()) / 1000));
+    el.textContent = remaining > 0 ? `${remaining}s` : 'Resolving…';
+    el.style.color = remaining <= 5 ? 'var(--orange)' : 'var(--coral)';
+  });
 }
 
 // ═══════════════════════════════════════════
