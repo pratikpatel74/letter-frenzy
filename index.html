@@ -1,3 +1,10 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Letter Frenzy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
@@ -226,6 +233,8 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
   .reveal-letter { font-size: 10rem; }
 }
 </style>
+</head>
+<body>
 
 <canvas id="stars"></canvas>
 <div id="loading" hidden><div class="spinner"></div><div class="text-dim">Loading…</div></div>
@@ -234,22 +243,22 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
 <div id="app">
 
 <!-- ══ HOME ══ -->
-<div class="screen" id="screen-home" style="justify-content:center">
-  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;width:100%;max-width:380px">
-    <div class="text-center">
-      <div class="logo">Letter<br>Frenzy</div>
-      <div class="logo-sub">Multiplayer Word Game</div>
+<div class="screen" id="screen-home" style="justify-content:center;padding-top:max(40px,env(safe-area-inset-top));padding-bottom:max(40px,env(safe-area-inset-bottom))">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:40px;width:100%;max-width:380px;padding:0 8px">
+    <div class="text-center" style="margin-top:16px">
+      <div class="logo" style="font-size:clamp(3.5rem,14vw,5rem);line-height:1.05">Letter<br>Frenzy</div>
+      <div class="logo-sub" style="margin-top:10px;font-size:0.95rem;letter-spacing:3px">Multiplayer Word Game</div>
     </div>
-    <div style="width:100%;display:flex;flex-direction:column;gap:12px">
-      <button class="btn btn-coral" onclick="goSetup()">🎮 Create Game</button>
-      <button class="btn btn-teal" onclick="goJoin()">🚀 Join Game</button>
+    <div style="width:100%;display:flex;flex-direction:column;gap:14px">
+      <button class="btn btn-coral" style="padding:20px;font-size:1.15rem" onclick="goSetup()">🎮 Create Game</button>
+      <button class="btn btn-teal" style="padding:20px;font-size:1.15rem" onclick="goJoin()">🚀 Join Game</button>
     </div>
-    <div class="text-dim fs-sm text-center" style="max-width:260px">Race to fill categories with words starting with the same letter!</div>
+    <div class="text-dim text-center" style="font-size:0.95rem;max-width:280px;line-height:1.5">Race to fill categories with words starting with the same letter!</div>
   </div>
 </div>
 
 <!-- ══ SETUP ══ -->
-<div class="screen" id="screen-setup" hidden>
+<div class="screen" id="screen-setup" hidden style="justify-content:flex-start;align-items:center">
   <div class="hbar">
     <button class="back-btn" onclick="showScreen('home')">←</button>
     <div class="hbar-title">Game Setup</div>
@@ -1521,3 +1530,5 @@ function toast(msg, duration = 2500) {
 }
 
 </script>
+</body>
+</html>
