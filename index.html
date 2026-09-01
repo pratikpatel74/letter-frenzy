@@ -810,14 +810,16 @@ function onAnswersChange() {
 async function navigateToRoomStatus(status) {
   const map = { lobby:'lobby', picking:'pick', revealing:'reveal', playing:'playing', review:'review', final:'final' };
   const target = map[status];
-  if (!target || target === S.currentScreen) return;
+  if (!target) return;
+  // Allow re-entering 'playing' for a new round (same status, new current_round)
+  if (target === S.currentScreen && target !== 'playing') return;
   // Transition side effects
   if (status === 'lobby')     { showLobby(); return; }
   if (status === 'picking')   { showPickScreen(); return; }
   if (status === 'revealing') { showReveal(); return; }
   if (status === 'playing')   { await showPlaying(); return; }
-  if (status === 'review')    { showReview(); return; }
-  if (status === 'final')     { showFinal(); return; }
+  if (status === 'review')    { await showReview(); return; }
+  if (status === 'final')     { await showFinal(); return; }
 }
 
 // ═══════════════════════════════════════════
@@ -1251,7 +1253,7 @@ async function triggerScoring() {
       await db.from('letter_frenzy_answers').update({ round_score: u.round_score, submitted: true }).eq('id', u.id);
     }
 
-    // Update player total scores
+    // Update player total scores — fetch fresh from DB to avoid using stale S.players
     const playerScoreAdds = {};
     updates.forEach(u => {
       const ans = allAnswers.find(a => a.id === u.id);
@@ -1259,8 +1261,9 @@ async function triggerScoring() {
       playerScoreAdds[ans.player_id] = (playerScoreAdds[ans.player_id] || 0) + u.round_score;
     });
 
+    const { data: freshPlayers } = await db.from('letter_frenzy_players').select('id, total_score').eq('room_id', S.roomId);
     for (const [pid, add] of Object.entries(playerScoreAdds)) {
-      const player = S.players.find(p => p.id === pid);
+      const player = freshPlayers?.find(p => p.id === pid);
       if (!player) continue;
       await db.from('letter_frenzy_players').update({ total_score: (player.total_score || 0) + add }).eq('id', pid);
     }
@@ -1299,9 +1302,11 @@ function areDuplicates(a, b) {
 // ═══════════════════════════════════════════
 // REVIEW SCREEN
 // ═══════════════════════════════════════════
-function showReview() {
+async function showReview() {
   stopTimer();
   showScreen('review');
+  // Fresh fetch so we always have scored answers and updated player totals
+  await Promise.all([refreshPlayers(), refreshAnswers()]);
   document.getElementById('review-round').textContent = S.room?.current_round || 1;
   document.getElementById('review-host-btn').hidden = !S.isHost;
   document.getElementById('review-wait').hidden = S.isHost;
@@ -1434,8 +1439,9 @@ async function advanceGame() {
 // ═══════════════════════════════════════════
 // FINAL SCREEN
 // ═══════════════════════════════════════════
-function showFinal() {
+async function showFinal() {
   showScreen('final');
+  await refreshPlayers(); // ensure final scores are up to date
   renderFinal();
 }
 
