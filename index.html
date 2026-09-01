@@ -2078,13 +2078,22 @@ function shareLink() {
 // ═══════════════════════════════════════════
 // AUDIO ENGINE
 // ═══════════════════════════════════════════
-const LOBBY_SCALE = [261.63, 329.63, 392.00, 440.00, 523.25]; // C4 E4 G4 A4 C5
-const LOBBY_PAT   = [0, 1, 2, 3, 4, 3, 2, 1, 0, 2, 3, 2];    // ascending + meandering
-const LOBBY_TEMPO = 375; // ms per step (~80BPM 8th notes)
 
-const GAME_SCALE  = [392.00, 440.00, 493.88, 587.33, 659.26]; // G4 A4 B4 D5 E5
-const GAME_PAT    = [0, 2, 4, 2, 3, 4, 1, 0, 2, 3, 4, 3];     // energetic bounce
-const GAME_TEMPO  = 215; // ms per step (~140BPM 8th notes)
+// ── Lobby: C major pentatonic bell melody + soft beat ──
+const LOBBY_SCALE = [523.25, 587.33, 659.26, 784.00, 880.00]; // C5 D5 E5 G5 A5
+const LOBBY_PAT   = [0, 2, 3, 2,  1, 2, 3, 2,  2, 3, 4, 3,  2, 1, 0, 1]; // 16-step
+const LOBBY_BASS  = [261.63, 0, 0, 0,  196.00, 0, 0, 0,  261.63, 0, 0, 0,  196.00, 0, 0, 0];
+const LOBBY_KICK  = [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0]; // beats 1 & 3
+const LOBBY_HAT   = [0,0,0,0, 1,0,1,0, 0,0,0,0, 1,0,1,0]; // beats 2 & 4 + upbeats
+const LOBBY_TEMPO = 285; // ms/step (~105BPM 8th notes)
+
+// ── Game: G pentatonic chiptune + kick/hat ──
+const GAME_SCALE  = [392.00, 493.88, 587.33, 659.26, 784.00]; // G4 B4 D5 E5 G5
+const GAME_PAT    = [0, 2, 4, 3,  4, 2, 1, 0,  1, 2, 4, 3,  2, 1, 0, 2]; // 16-step
+const GAME_BASS   = [196.00, 0, 0, 0,  146.83, 0, 0, 0,  196.00, 0, 0, 0,  146.83, 0, 0, 0];
+const GAME_KICK   = [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0];
+const GAME_HAT    = [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0];
+const GAME_TEMPO  = 138; // ms/step (~109BPM 8th notes)
 
 let _bgStep = 0, _bgTimeout = null, _bgMusicType = null;
 
@@ -2101,13 +2110,78 @@ function _note(freq, when, dur, type, vol) {
   try {
     const osc = S.audioCtx.createOscillator();
     const g   = S.audioCtx.createGain();
-    osc.type = type || 'triangle';
+    osc.type = type || 'sine';
     osc.frequency.value = freq;
     g.gain.setValueAtTime(0, when);
-    g.gain.linearRampToValueAtTime(vol || 0.10, when + 0.015);
+    g.gain.linearRampToValueAtTime(vol || 0.10, when + 0.006);
     g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
     osc.connect(g); g.connect(S.audioCtx.destination);
-    osc.start(when); osc.stop(when + dur + 0.05);
+    osc.start(when); osc.stop(when + dur + 0.02);
+  } catch(e) {}
+}
+
+function _bell(freq, when, dur, vol) {
+  _note(freq,        when, dur,        'sine', vol);
+  _note(freq * 2.01, when, dur * 0.38, 'sine', vol * 0.28); // octave shimmer
+}
+
+function _kick(when) {
+  if (S.muted || !S.audioCtx) return;
+  try {
+    const osc = S.audioCtx.createOscillator();
+    const g   = S.audioCtx.createGain();
+    osc.frequency.setValueAtTime(140, when);
+    osc.frequency.exponentialRampToValueAtTime(38, when + 0.09);
+    g.gain.setValueAtTime(0.35, when);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + 0.14);
+    osc.connect(g); g.connect(S.audioCtx.destination);
+    osc.start(when); osc.stop(when + 0.16);
+  } catch(e) {}
+}
+
+function _softKick(when) {
+  if (S.muted || !S.audioCtx) return;
+  try {
+    const osc = S.audioCtx.createOscillator();
+    const g   = S.audioCtx.createGain();
+    osc.frequency.setValueAtTime(110, when);
+    osc.frequency.exponentialRampToValueAtTime(42, when + 0.07);
+    g.gain.setValueAtTime(0.17, when);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + 0.13);
+    osc.connect(g); g.connect(S.audioCtx.destination);
+    osc.start(when); osc.stop(when + 0.15);
+  } catch(e) {}
+}
+
+function _hat(when, vol) {
+  if (S.muted || !S.audioCtx) return;
+  try {
+    const buf = S.audioCtx.createBuffer(1, Math.floor(S.audioCtx.sampleRate * 0.08), S.audioCtx.sampleRate);
+    const d   = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = S.audioCtx.createBufferSource(); src.buffer = buf;
+    const f   = S.audioCtx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 7000;
+    const g   = S.audioCtx.createGain();
+    g.gain.setValueAtTime(vol || 0.10, when);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + 0.06);
+    src.connect(f); f.connect(g); g.connect(S.audioCtx.destination);
+    src.start(when);
+  } catch(e) {}
+}
+
+function _softHat(when) {
+  if (S.muted || !S.audioCtx) return;
+  try {
+    const buf = S.audioCtx.createBuffer(1, Math.floor(S.audioCtx.sampleRate * 0.06), S.audioCtx.sampleRate);
+    const d   = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = S.audioCtx.createBufferSource(); src.buffer = buf;
+    const f   = S.audioCtx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 5500; f.Q.value = 0.8;
+    const g   = S.audioCtx.createGain();
+    g.gain.setValueAtTime(0.045, when);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + 0.05);
+    src.connect(f); f.connect(g); g.connect(S.audioCtx.destination);
+    src.start(when);
   } catch(e) {}
 }
 
@@ -2115,14 +2189,29 @@ function _bgTick() {
   if (!_bgMusicType) return;
   const ctx = ensureAudioCtx();
   if (ctx) {
-    const [scale, pat, tempo, vol] = _bgMusicType === 'lobby'
-      ? [LOBBY_SCALE, LOBBY_PAT, LOBBY_TEMPO, 0.07]
-      : [GAME_SCALE,  GAME_PAT,  GAME_TEMPO,  0.09];
     if (!S.muted) {
-      _note(scale[pat[_bgStep % pat.length]], ctx.currentTime, (tempo * 0.82) / 1000, 'triangle', vol);
+      const si = _bgStep % 16;
+      const t  = ctx.currentTime;
+      if (_bgMusicType === 'lobby') {
+        _bell(LOBBY_SCALE[LOBBY_PAT[si]], t, 0.22, 0.16);
+        const bass = LOBBY_BASS[si];
+        if (bass) _note(bass, t, 0.28, 'sine', 0.055);
+        if (LOBBY_KICK[si]) _softKick(t);
+        if (LOBBY_HAT[si])  _softHat(t);
+        _bgTimeout = setTimeout(_bgTick, LOBBY_TEMPO);
+      } else {
+        _note(GAME_SCALE[GAME_PAT[si]], t, 0.092, 'square', 0.095);
+        const bass = GAME_BASS[si];
+        if (bass) { _note(bass, t, 0.115, 'square', 0.065); _note(bass * 0.5, t, 0.1, 'square', 0.04); }
+        if (GAME_KICK[si]) _kick(t);
+        if (GAME_HAT[si])  _hat(t, 0.10);
+        _bgTimeout = setTimeout(_bgTick, GAME_TEMPO);
+      }
+    } else {
+      const tempo = _bgMusicType === 'lobby' ? LOBBY_TEMPO : GAME_TEMPO;
+      _bgTimeout = setTimeout(_bgTick, tempo);
     }
     _bgStep++;
-    _bgTimeout = setTimeout(_bgTick, tempo);
   } else {
     // AudioContext not ready yet — retry shortly
     _bgTimeout = setTimeout(_bgTick, 200);
