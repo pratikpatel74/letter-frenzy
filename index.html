@@ -162,6 +162,9 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
 @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-7px)} 40%,80%{transform:translateX(7px)} }
 .shake { animation: shake .4s ease; }
 
+/* ── Tie-break modal ── */
+#tiebreak-modal[hidden] { display: none !important; }
+
 /* ── Loading overlay ── */
 #loading { position: fixed; inset: 0; z-index: 99; background: rgba(10,9,26,.9); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
 #loading[hidden] { display: none !important; }
@@ -1748,8 +1751,11 @@ async function hostVeto(answerId, verdict) {
 async function resolveChallenge(answerId, verdict) {
   const ans = S.answers.find(a => a.id === answerId);
   if (!ans || ans.challenge_status) return;
+  // Optimistically mark resolved so the interval can't retrigger before Supabase confirms
+  ans.challenge_status = verdict;
   const newScore = verdict === 'approved' ? 5 : 0;
   const oldScore = ans.round_score || 0;
+  ans.round_score = newScore;
   await db.from('letter_frenzy_answers').update({ challenge_status: verdict, round_score: newScore }).eq('id', answerId);
   const diff = newScore - oldScore;
   if (diff !== 0) {
