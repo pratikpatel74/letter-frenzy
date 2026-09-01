@@ -213,6 +213,9 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
 .play-letter { font-family: 'Fredoka One', cursive; font-size: 3.5rem; line-height: 1; background: linear-gradient(135deg, var(--mint), var(--teal)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .play-round { font-size: .8rem; color: var(--dim); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 
+/* ── Mobile keyboard viewport fix ── */
+#screen-playing { transition: height .1s ease, top .1s ease; }
+
 /* ── Utilities ── */
 .text-center { text-align: center; }
 .text-dim { color: var(--dim); }
@@ -473,7 +476,13 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
     <div class="podium" id="final-podium"></div>
     <div class="card mb14" id="final-scores"></div>
     <button class="btn btn-orange mb8" onclick="shareResults()">📤 Share Results</button>
-    <button class="btn btn-ghost" onclick="playAgain()">Play Again</button>
+    <div id="final-host-btn" hidden>
+      <button class="btn btn-coral mb8" onclick="rematch()">🔄 Rematch</button>
+    </div>
+    <div id="final-wait" hidden class="card text-center mb8">
+      <div class="fw700 text-dim">🕐 Waiting for host…</div>
+    </div>
+    <button class="btn btn-ghost" onclick="playAgain()">Leave Game</button>
     <div style="height:20px"></div>
   </div>
 </div>
@@ -521,6 +530,11 @@ window.addEventListener('DOMContentLoaded', () => {
   const joinParam = new URLSearchParams(location.search).get('join');
   if (joinParam && joinParam.length === 4 && !sessionStorage.getItem('lf_pid')) {
     goJoin(joinParam);
+  }
+  // Mobile keyboard: resize playing screen to the visible viewport so inputs stay accessible
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', onViewportResize);
+    window.visualViewport.addEventListener('scroll', onViewportResize);
   }
   tryReconnect();
 });
@@ -1167,6 +1181,12 @@ async function showPlaying() {
   document.getElementById('submit-btn').disabled = submitted;
   if (submitted) document.getElementById('submit-btn').textContent = '✅ Submitted';
   document.getElementById('play-host-end').hidden = !S.isHost;
+  // On mobile, scroll focused input into view above the keyboard
+  document.querySelectorAll('#answer-fields input').forEach(inp => {
+    inp.addEventListener('focus', () => {
+      setTimeout(() => inp.scrollIntoView({ behavior: 'smooth', block: 'center' }), 350);
+    });
+  });
   renderSubmitStatus();
   startTimer();
 }
@@ -1532,6 +1552,8 @@ async function advanceGame() {
 async function showFinal() {
   showScreen('final');
   await refreshPlayers(); // ensure final scores are up to date
+  document.getElementById('final-host-btn').hidden = !S.isHost;
+  document.getElementById('final-wait').hidden = S.isHost;
   renderFinal();
 }
 
@@ -1616,6 +1638,20 @@ function loading(show) {
 }
 
 // ═══════════════════════════════════════════
+// MOBILE KEYBOARD — VIEWPORT RESIZE
+// ═══════════════════════════════════════════
+function onViewportResize() {
+  const vv = window.visualViewport;
+  if (!vv) return;
+  const playing = document.getElementById('screen-playing');
+  if (!playing || playing.hidden) return;
+  // Pin the screen to the visible viewport so the keyboard doesn't obscure inputs
+  playing.style.position = 'fixed';
+  playing.style.top = vv.offsetTop + 'px';
+  playing.style.height = vv.height + 'px';
+}
+
+// ═══════════════════════════════════════════
 // LOBBY CANCEL / LEAVE
 // ═══════════════════════════════════════════
 async function cancelGame() {
@@ -1655,6 +1691,29 @@ async function endGameEarly() {
   try {
     await db.from('letter_frenzy_rooms').update({ status: 'final' }).eq('id', S.roomId);
   } catch(e) { console.error(e); toast('Error ending game'); }
+  loading(false);
+}
+
+// ═══════════════════════════════════════════
+// REMATCH (HOST)
+// ═══════════════════════════════════════════
+async function rematch() {
+  if (!S.isHost) return;
+  loading(true);
+  try {
+    // Delete all answers so a clean slate for new game
+    await db.from('letter_frenzy_answers').delete().eq('room_id', S.roomId);
+    // Reset all player scores
+    await db.from('letter_frenzy_players').update({ total_score: 0, letter_pick: null }).eq('room_id', S.roomId);
+    // Reset room to lobby — Realtime will push everyone back to lobby screen
+    await db.from('letter_frenzy_rooms').update({
+      status: 'lobby',
+      current_round: 0,
+      current_letter: null,
+      used_letters: [],
+      round_started_at: null,
+    }).eq('id', S.roomId);
+  } catch(e) { console.error(e); toast('Error starting rematch'); }
   loading(false);
 }
 
