@@ -265,6 +265,15 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
   .logo { font-size: 4rem; }
   .reveal-letter { font-size: 10rem; }
 }
+
+/* ── Mute button ── */
+#mute-btn { position: fixed; top: max(14px, env(safe-area-inset-top)); right: 16px; z-index: 50; background: rgba(255,255,255,.1); border: 1.5px solid rgba(255,255,255,.15); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; transition: background .15s; backdrop-filter: blur(6px); line-height: 1; }
+#mute-btn:hover { background: rgba(255,255,255,.2); }
+
+/* ── Round leaderboard ── */
+.round-lb-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.07); }
+.round-lb-row:last-child { border-bottom: none; }
+.round-lb-row.me { background: rgba(255,255,255,.05); margin: 0 -20px; padding: 7px 20px; border-bottom: none; }
 </style>
 </head>
 <body>
@@ -272,6 +281,7 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
 <canvas id="stars"></canvas>
 <div id="loading" hidden><div class="spinner"></div><div class="text-dim">Loading…</div></div>
 <div id="toast"></div>
+<button id="mute-btn" title="Toggle sound" onclick="toggleMute()">🔊</button>
 
 <div id="app">
 
@@ -552,6 +562,7 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
       <div class="row mb8"><div class="fw800 text-coral">⚠️ Challenges to Rule On</div></div>
       <div id="challenge-items"></div>
     </div>
+    <div id="review-leaderboard" class="card mb14" hidden></div>
     <div id="review-body"></div>
     <div id="review-host-btn" hidden style="margin-top:14px">
       <button class="btn btn-coral" id="next-round-btn" onclick="advanceGame()">Next Round →</button>
@@ -624,6 +635,7 @@ let S = {
   channel: null, currentScreen: 'home',
   revealCountdown: null,
   voteCheckInterval: null, pendingTieBreak: null,
+  muted: false, audioCtx: null,
 };
 
 // ═══════════════════════════════════════════
@@ -647,6 +659,13 @@ window.addEventListener('DOMContentLoaded', () => {
     window.visualViewport.addEventListener('scroll', onViewportResize);
   }
   tryReconnect();
+  // Init audio on first user gesture
+  const _initAudio = () => {
+    ensureAudioCtx();
+    if (_bgMusicType && !_bgTimeout) _bgTick();
+  };
+  document.addEventListener('click', _initAudio, { passive: true });
+  document.addEventListener('touchstart', _initAudio, { passive: true });
 });
 
 // ═══════════════════════════════════════════
@@ -843,6 +862,11 @@ function showScreen(name) {
     S.pendingTieBreak = null;
   }
   S.currentScreen = name;
+  // Background music routing
+  const LOBBY_SCREENS = new Set(['home','setup','join','lobby','howtoplay','pick']);
+  if (LOBBY_SCREENS.has(name)) startBgMusic('lobby');
+  else if (name === 'playing') startBgMusic('game');
+  else stopBgMusic();
 }
 
 function goSetup() { showScreen('setup'); }
@@ -1460,6 +1484,7 @@ function startTimer() {
   const startedAt = new Date(S.room.round_started_at).getTime();
   const circumference = 2 * Math.PI * 45; // r=45 → ~282.7
 
+  let _lastCdTick = -1;
   const tick = () => {
     const elapsed = (Date.now() - startedAt) / 1000;
     const remaining = Math.max(0, total - elapsed);
@@ -1473,6 +1498,13 @@ function startTimer() {
     else ring.style.stroke = 'var(--coral)';
 
     txt.textContent = Math.ceil(remaining);
+
+    // Countdown ticks for last 5 seconds
+    const whole = Math.ceil(remaining);
+    if (remaining > 0 && whole <= 5 && whole !== _lastCdTick) {
+      _lastCdTick = whole;
+      sfx.countdown();
+    }
 
     if (remaining <= 0) {
       clearInterval(S.timerInterval);
@@ -1599,6 +1631,7 @@ async function showReview() {
   }, 1000);
 
   showScreen('review');
+  sfx.roundEnd();
   // Fresh fetch so we always have scored answers and updated player totals
   await Promise.all([refreshPlayers(), refreshAnswers()]);
   document.getElementById('review-round').textContent = S.room?.current_round || 1;
@@ -1719,6 +1752,7 @@ function renderReview() {
   // Hide old challenge queue (voting is now inline)
   document.getElementById('challenge-queue').hidden = true;
 
+  renderLeaderboard();
   updateNextRoundBtn();
 }
 
@@ -1768,6 +1802,7 @@ async function resolveChallenge(answerId, verdict) {
     S.pendingTieBreak = null;
     document.getElementById('tiebreak-modal').hidden = true;
   }
+  if (verdict === 'approved') sfx.valid(); else sfx.invalid();
   toast(verdict === 'approved' ? '✓ Valid (5pt)' : '✗ Invalid (0pt)');
 }
 
@@ -1861,6 +1896,7 @@ async function advanceGame() {
 // ═══════════════════════════════════════════
 async function showFinal() {
   showScreen('final');
+  sfx.winner();
   await refreshPlayers(); // ensure final scores are up to date
   document.getElementById('final-host-btn').hidden = !S.isHost;
   document.getElementById('final-wait').hidden = S.isHost;
@@ -2037,6 +2073,159 @@ function shareLink() {
   } else {
     navigator.clipboard?.writeText(url).then(() => toast('Invite link copied! 🔗'));
   }
+}
+
+// ═══════════════════════════════════════════
+// AUDIO ENGINE
+// ═══════════════════════════════════════════
+const LOBBY_SCALE = [261.63, 329.63, 392.00, 440.00, 523.25]; // C4 E4 G4 A4 C5
+const LOBBY_PAT   = [0, 1, 2, 3, 4, 3, 2, 1, 0, 2, 3, 2];    // ascending + meandering
+const LOBBY_TEMPO = 375; // ms per step (~80BPM 8th notes)
+
+const GAME_SCALE  = [392.00, 440.00, 493.88, 587.33, 659.26]; // G4 A4 B4 D5 E5
+const GAME_PAT    = [0, 2, 4, 2, 3, 4, 1, 0, 2, 3, 4, 3];     // energetic bounce
+const GAME_TEMPO  = 215; // ms per step (~140BPM 8th notes)
+
+let _bgStep = 0, _bgTimeout = null, _bgMusicType = null;
+
+function ensureAudioCtx() {
+  if (!S.audioCtx) {
+    try { S.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return null; }
+  }
+  if (S.audioCtx.state === 'suspended') S.audioCtx.resume().catch(() => {});
+  return S.audioCtx;
+}
+
+function _note(freq, when, dur, type, vol) {
+  if (S.muted || !S.audioCtx) return;
+  try {
+    const osc = S.audioCtx.createOscillator();
+    const g   = S.audioCtx.createGain();
+    osc.type = type || 'triangle';
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0, when);
+    g.gain.linearRampToValueAtTime(vol || 0.10, when + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+    osc.connect(g); g.connect(S.audioCtx.destination);
+    osc.start(when); osc.stop(when + dur + 0.05);
+  } catch(e) {}
+}
+
+function _bgTick() {
+  if (!_bgMusicType) return;
+  const ctx = ensureAudioCtx();
+  if (ctx) {
+    const [scale, pat, tempo, vol] = _bgMusicType === 'lobby'
+      ? [LOBBY_SCALE, LOBBY_PAT, LOBBY_TEMPO, 0.07]
+      : [GAME_SCALE,  GAME_PAT,  GAME_TEMPO,  0.09];
+    if (!S.muted) {
+      _note(scale[pat[_bgStep % pat.length]], ctx.currentTime, (tempo * 0.82) / 1000, 'triangle', vol);
+    }
+    _bgStep++;
+    _bgTimeout = setTimeout(_bgTick, tempo);
+  } else {
+    // AudioContext not ready yet — retry shortly
+    _bgTimeout = setTimeout(_bgTick, 200);
+  }
+}
+
+function startBgMusic(type) {
+  if (_bgMusicType === type) return;
+  stopBgMusic();
+  _bgMusicType = type;
+  _bgStep = 0;
+  // Only tick if AudioContext already exists (created by a prior gesture); else _initAudio will fire it
+  if (S.audioCtx) _bgTick();
+}
+
+function stopBgMusic() {
+  if (_bgTimeout) { clearTimeout(_bgTimeout); _bgTimeout = null; }
+  _bgMusicType = null;
+}
+
+function toggleMute() {
+  S.muted = !S.muted;
+  document.getElementById('mute-btn').textContent = S.muted ? '🔇' : '🔊';
+  if (!S.muted && _bgMusicType) {
+    // Restart the scheduler loop
+    if (_bgTimeout) { clearTimeout(_bgTimeout); _bgTimeout = null; }
+    _bgTick();
+  }
+}
+
+const sfx = {
+  valid() {
+    if (S.muted) return;
+    const ctx = ensureAudioCtx(); if (!ctx) return;
+    const t = ctx.currentTime;
+    _note(523.25, t,        0.14, 'sine', 0.18);
+    _note(659.26, t + 0.11, 0.22, 'sine', 0.22);
+  },
+  invalid() {
+    if (S.muted) return;
+    const ctx = ensureAudioCtx(); if (!ctx) return;
+    const t = ctx.currentTime;
+    _note(220,   t,        0.15, 'sawtooth', 0.11);
+    _note(185,   t + 0.10, 0.28, 'sawtooth', 0.09);
+  },
+  countdown() {
+    if (S.muted) return;
+    const ctx = ensureAudioCtx(); if (!ctx) return;
+    _note(880, ctx.currentTime, 0.06, 'square', 0.07);
+  },
+  roundEnd() {
+    if (S.muted) return;
+    const ctx = ensureAudioCtx(); if (!ctx) return;
+    const t = ctx.currentTime;
+    [523.25, 587.33, 659.26, 783.99].forEach((f, i) =>
+      _note(f, t + i * 0.09, 0.18, 'sine', 0.17));
+  },
+  winner() {
+    if (S.muted) return;
+    const ctx = ensureAudioCtx(); if (!ctx) return;
+    const t = ctx.currentTime;
+    const ns = [523.25, 587.33, 659.26, 783.99, 659.26, 783.99, 1046.5];
+    const ts = [0, 0.10, 0.20, 0.35, 0.50, 0.65, 0.80];
+    ns.forEach((f, i) => _note(f, t + ts[i], 0.25 + i * 0.02, 'sine', 0.17 + i * 0.01));
+  }
+};
+
+// ═══════════════════════════════════════════
+// ROUND LEADERBOARD
+// ═══════════════════════════════════════════
+function renderLeaderboard() {
+  const el = document.getElementById('review-leaderboard');
+  if (!el || !S.players.length) return;
+
+  // Sum round scores per player from current-round answers
+  const roundScores = {};
+  S.answers.forEach(a => {
+    roundScores[a.player_id] = (roundScores[a.player_id] || 0) + (a.round_score || 0);
+  });
+
+  const maxRS = Math.max(0, ...S.players.map(p => roundScores[p.id] || 0));
+
+  // Sort by total score desc; break ties by round score
+  const sorted = [...S.players].sort((a, b) => {
+    if (b.total_score !== a.total_score) return b.total_score - a.total_score;
+    return (roundScores[b.id] || 0) - (roundScores[a.id] || 0);
+  });
+
+  el.hidden = false;
+  el.innerHTML =
+    `<div class="fw800 mb8" style="font-size:.82rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--orange)">📊 Standings · Round ${S.room?.current_round || 1}</div>` +
+    sorted.map((p, i) => {
+      const rs = roundScores[p.id] || 0;
+      const roundWin = rs > 0 && rs === maxRS;
+      const isMe = p.id === S.playerId;
+      return `<div class="round-lb-row${isMe ? ' me' : ''}">
+        <div style="font-family:'Space Mono',monospace;color:var(--dim);width:18px;font-size:.78rem;font-weight:700">${i + 1}</div>
+        <div class="av-sm" style="background:${p.avatar_color}">${p.avatar_emoji}</div>
+        <div style="flex:1;font-weight:700;font-size:.9rem">${esc(p.name)}${isMe ? ' <span style="color:var(--dim);font-weight:400;font-size:.75rem">(you)</span>' : ''}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:.78rem;color:${roundWin ? 'var(--mint)' : 'rgba(255,255,255,.3)'}">+${rs}${roundWin ? ' 🏅' : ''}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:.88rem;color:var(--yellow);min-width:42px;text-align:right;font-weight:700">${p.total_score}pt</div>
+      </div>`;
+    }).join('');
 }
 
 let _toastTimer;
