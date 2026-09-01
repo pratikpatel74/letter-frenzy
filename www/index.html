@@ -1,0 +1,1176 @@
+<title>Letter Frenzy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg:     #0A091A;
+  --card:   #1C1952;
+  --card2:  #251F6A;
+  --coral:  #FF5F6D;
+  --orange: #FFC371;
+  --teal:   #11998E;
+  --mint:   #38EF7D;
+  --yellow: #FFE234;
+  --purple: #A29BFE;
+  --text:   #FFFFFF;
+  --dim:    rgba(255,255,255,0.52);
+  --r:      16px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  overflow-x: hidden;
+}
+
+canvas#stars {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ── Page system ── */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ── Shared ── */
+section { position: relative; z-index: 1; }
+
+.inner {
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  position: relative;
+  z-index: 1;
+  margin: 0 20px;
+}
+
+/* ── Typography ── */
+.logo {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(2.8rem, 10vw, 5.2rem);
+  background: linear-gradient(135deg, var(--coral), var(--orange), var(--yellow));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.logo-sub {
+  font-size: .75rem;
+  color: var(--dim);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-top: 7px;
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: .7rem;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 10px;
+}
+
+.section-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  text-wrap: balance;
+}
+
+/* ── HERO ── */
+.hero {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 20px 88px;
+  text-align: center;
+}
+
+.showcase {
+  margin: 44px 0 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.showcase-label {
+  font-size: .72rem;
+  color: var(--dim);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.letter-tile {
+  width: clamp(130px, 36vw, 160px);
+  height: clamp(130px, 36vw, 160px);
+  background: linear-gradient(150deg, var(--card2) 0%, var(--card) 100%);
+  border-radius: 26px;
+  border: 2px solid rgba(255,255,255,0.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(5.5rem, 16vw, 7.5rem);
+  color: var(--yellow);
+  box-shadow: 0 12px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04) inset, 0 1px 0 rgba(255,255,255,0.10) inset;
+  user-select: none;
+  transition: transform .18s cubic-bezier(.34,1.56,.64,1);
+  position: relative;
+  overflow: hidden;
+}
+
+.letter-tile::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 52%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%);
+  border-radius: 24px 24px 0 0;
+  pointer-events: none;
+}
+
+.category-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  max-width: 320px;
+}
+
+.pill {
+  background: var(--card);
+  border: 1.5px solid rgba(255,255,255,0.10);
+  border-radius: 99px;
+  padding: 6px 15px;
+  font-size: .82rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.45);
+  transition: color .25s, border-color .25s, background .25s;
+}
+
+.pill.lit {
+  color: var(--text);
+  border-color: rgba(255,255,255,0.28);
+  background: var(--card2);
+}
+
+.tagline {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(1.65rem, 5vw, 2.5rem);
+  line-height: 1.2;
+  text-wrap: balance;
+  margin-bottom: 10px;
+}
+
+.tagline-sub {
+  color: var(--dim);
+  font-size: clamp(.9rem, 2.5vw, 1.05rem);
+  font-weight: 600;
+  text-wrap: balance;
+  margin-bottom: 36px;
+  max-width: 360px;
+}
+
+.btn-play {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 46px;
+  border-radius: 99px;
+  background: linear-gradient(135deg, var(--coral) 0%, #FF8C96 100%);
+  color: #fff;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.12rem;
+  font-weight: 800;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 28px rgba(255,95,109,.38);
+  transition: transform .14s, box-shadow .14s;
+  letter-spacing: .2px;
+}
+
+.btn-play:hover { transform: translateY(-2px); box-shadow: 0 8px 36px rgba(255,95,109,.52); }
+.btn-play:active { transform: scale(.97); }
+
+.cta-note {
+  margin-top: 14px;
+  font-size: .76rem;
+  color: var(--dim);
+  letter-spacing: .4px;
+  font-weight: 600;
+}
+
+/* ── HOW TO PLAY TEASER (homepage) ── */
+.htp-teaser {
+  padding: 72px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.htp-teaser-card {
+  width: 100%;
+  max-width: 780px;
+  background: var(--card);
+  border-radius: 20px;
+  border: 1.5px solid rgba(255,255,255,0.08);
+  padding: 36px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  transition: border-color .22s;
+}
+
+.htp-teaser-card:hover { border-color: rgba(255,255,255,0.18); }
+
+.htp-teaser-left { display: flex; flex-direction: column; gap: 6px; }
+
+.htp-teaser-left .ei { font-size: 2rem; margin-bottom: 4px; }
+
+.htp-teaser-left h3 {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.5rem;
+}
+
+.htp-teaser-left p {
+  color: var(--dim);
+  font-size: .9rem;
+  font-weight: 600;
+  max-width: 380px;
+  line-height: 1.6;
+}
+
+.btn-ghost-teal {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border-radius: 99px;
+  background: rgba(17,153,142,0.12);
+  border: 1.5px solid rgba(17,153,142,0.45);
+  color: var(--mint);
+  font-family: 'Nunito', sans-serif;
+  font-size: .95rem;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  white-space: nowrap;
+}
+
+.btn-ghost-teal:hover { background: rgba(17,153,142,0.22); border-color: var(--teal); }
+
+/* ── FAQ ── */
+.faq {
+  padding: 72px 20px 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 36px;
+}
+
+.section-head { text-align: center; }
+
+.faq-list {
+  width: 100%;
+  max-width: 780px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.faq-item {
+  background: var(--card);
+  border-radius: var(--r);
+  border: 1.5px solid rgba(255,255,255,0.07);
+  overflow: hidden;
+  transition: border-color .2s;
+}
+
+.faq-item.open { border-color: rgba(255,255,255,0.18); }
+
+.faq-q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 800;
+  font-size: .97rem;
+}
+
+.faq-q:hover { background: rgba(255,255,255,0.03); }
+
+.faq-chevron {
+  font-size: .8rem;
+  color: var(--dim);
+  flex-shrink: 0;
+  transition: transform .22s;
+}
+
+.faq-item.open .faq-chevron { transform: rotate(180deg); }
+
+.faq-a {
+  display: none;
+  padding: 0 22px 20px;
+  color: var(--dim);
+  font-size: .9rem;
+  line-height: 1.7;
+  font-weight: 600;
+}
+
+.faq-item.open .faq-a { display: block; }
+
+/* ── FEATURES ── */
+.features {
+  padding: 0 20px 88px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 36px;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 11px;
+  width: 100%;
+  max-width: 780px;
+}
+
+.fchip {
+  background: var(--card);
+  border: 1.5px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 15px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: .88rem;
+  font-weight: 700;
+  transition: border-color .18s;
+}
+
+.fchip:hover { border-color: rgba(255,255,255,0.18); }
+.fchip .fi { font-size: 1.25rem; flex-shrink: 0; }
+
+/* ── BOTTOM CTA ── */
+.bottom-cta {
+  padding: 80px 20px 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  background: linear-gradient(180deg, transparent 0%, rgba(28,25,82,0.5) 100%);
+}
+
+.bottom-cta .tagline { margin-bottom: 6px; }
+.bottom-cta .tagline-sub { margin-bottom: 28px; }
+
+/* ── FOOTER ── */
+footer {
+  position: relative;
+  z-index: 1;
+  padding: 24px 20px;
+  text-align: center;
+  color: var(--dim);
+  font-size: .8rem;
+  font-weight: 600;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+footer a { color: var(--dim); text-decoration: none; transition: color .15s; }
+footer a:hover { color: var(--text); }
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer-sep { opacity: 0.3; }
+
+/* ── LEGAL / HTP PAGES ── */
+.legal-page {
+  position: relative;
+  z-index: 1;
+  min-height: 100svh;
+  padding: 48px 20px 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+}
+
+.legal-back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--dim);
+  font-size: .9rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  transition: color .15s;
+}
+
+.legal-back:hover { color: var(--text); }
+
+.legal-inner {
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.legal-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(2rem, 6vw, 3rem);
+  background: linear-gradient(135deg, var(--coral), var(--orange), var(--yellow));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.legal-date {
+  font-size: .8rem;
+  color: var(--dim);
+  font-weight: 600;
+  margin-top: -24px;
+}
+
+.legal-section h3 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+  color: var(--orange);
+}
+
+.legal-section p, .legal-section li {
+  color: var(--dim);
+  font-size: .92rem;
+  line-height: 1.75;
+  font-weight: 600;
+}
+
+.legal-section ul {
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── HOW TO PLAY PAGE styles ── */
+.goal-card {
+  background: var(--card);
+  border-radius: var(--r);
+  border-left: 4px solid var(--coral);
+  padding: 26px 24px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.goal-card .gi { font-size: 2rem; flex-shrink: 0; }
+.goal-card h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; }
+.goal-card p  { color: var(--dim); font-size: .92rem; line-height: 1.65; font-weight: 600; }
+
+.round-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: var(--card);
+  border-radius: var(--r);
+  overflow: hidden;
+  border: 1.5px solid rgba(255,255,255,0.06);
+}
+
+.round-step {
+  display: flex;
+  gap: 18px;
+  padding: 22px 24px;
+  align-items: flex-start;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.round-step:last-child { border-bottom: none; }
+
+.step-bubble {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: .95rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.round-step h4 { font-size: 1rem; font-weight: 800; margin-bottom: 4px; }
+.round-step p  { color: var(--dim); font-size: .88rem; line-height: 1.6; font-weight: 600; }
+
+.score-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0;
+  background: var(--card);
+  border-radius: var(--r);
+  overflow: hidden;
+  border: 1.5px solid rgba(255,255,255,0.06);
+}
+
+.score-row { display: contents; }
+
+.score-row > div {
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.score-row:last-child > div { border-bottom: none; }
+
+.score-pts {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.5rem;
+  min-width: 72px;
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+
+.score-desc { color: var(--dim); font-size: .9rem; font-weight: 600; line-height: 1.5; }
+
+.challenge-card {
+  background: var(--card);
+  border-radius: var(--r);
+  border-left: 4px solid var(--purple);
+  padding: 26px 24px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.challenge-card .gi { font-size: 2rem; flex-shrink: 0; }
+.challenge-card h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; }
+.challenge-card p  { color: var(--dim); font-size: .9rem; line-height: 1.7; font-weight: 600; }
+
+.tips-card {
+  background: var(--card);
+  border-radius: var(--r);
+  border-left: 4px solid var(--mint);
+  padding: 26px 24px;
+}
+
+.tips-card h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 14px; }
+
+.tip {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.tip:last-child { border-bottom: none; padding-bottom: 0; }
+
+.tip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mint);
+  flex-shrink: 0;
+  margin-top: 7px;
+}
+
+.tip p { color: var(--dim); font-size: .9rem; line-height: 1.6; font-weight: 600; }
+.tip strong { color: var(--text); }
+
+.htp-section-label {
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-bottom: 4px;
+}
+
+.htp-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Responsive */
+@keyframes floatLetter {
+  0%   { transform: translateY(0px) rotate(-4deg); }
+  50%  { transform: translateY(-28px) rotate(6deg); }
+  100% { transform: translateY(0px) rotate(-4deg); }
+}
+
+@keyframes waveBounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+
+.logo span {
+  display: inline-block;
+  animation: waveBounce 1.8s ease-in-out infinite;
+}
+.logo span.space { display: inline-block; width: .28em; }
+
+@media (max-width: 600px) {
+  .hero { min-height: auto; padding: 60px 20px 52px; }
+  .htp-teaser { padding: 32px 20px; }
+}
+
+@media (max-width: 560px) {
+  .htp-teaser-card { flex-direction: column; align-items: flex-start; }
+  .feature-grid    { grid-template-columns: 1fr 1fr; }
+  .score-pts       { min-width: 58px; }
+}
+</style>
+
+<canvas id="stars"></canvas>
+
+<!-- ════════════════════════════════ -->
+<!-- HOME PAGE                        -->
+<!-- ════════════════════════════════ -->
+<div class="page active" id="page-home">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div>
+      <div class="logo"><span>L</span><span>e</span><span>t</span><span>t</span><span>e</span><span>r</span><span class="space"> </span><span>F</span><span>r</span><span>e</span><span>n</span><span>z</span><span>y</span></div>
+      <div class="logo-sub">The party word game</div>
+    </div>
+
+    <div class="showcase">
+      <div class="showcase-label">This round's letter is…</div>
+      <div class="letter-tile" id="tile">S</div>
+      <div class="category-pills" id="pills">
+        <div class="pill">Name</div>
+        <div class="pill">Country</div>
+        <div class="pill">Food</div>
+        <div class="pill">Animal</div>
+        <div class="pill">Famous Person</div>
+      </div>
+    </div>
+
+    <p class="tagline">The word game everyone can play</p>
+    <p class="tagline-sub">Pick a letter. Race the clock. Outsmart your friends.</p>
+    <a class="btn-play" href="https://play.letterfrenzy.co.uk" target="_blank">🎮 Play Now — it's free</a>
+    <p class="cta-note">No download · Works on any device · Up to 8 players</p>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- HOW TO PLAY TEASER -->
+  <section class="htp-teaser">
+    <div class="htp-teaser-card">
+      <div class="htp-teaser-left">
+        <div class="ei">📖</div>
+        <h3>New to Letter Frenzy?</h3>
+        <p>Learn the rules, scoring, how challenges work, and tips for outsmarting your opponents.</p>
+      </div>
+      <button class="btn-ghost-teal" onclick="showPage('howtoplay')">How to Play →</button>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- FAQ -->
+  <section class="faq">
+    <div class="section-head">
+      <div class="eyebrow">FAQ</div>
+      <h2 class="section-title">Common questions</h2>
+    </div>
+
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">How many players can play at once? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">Letter Frenzy supports 2 to 8 players in a single room. It works best with 3–6, but the more the merrier — more players means more chances for creative clashes and funny challenges.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Do I need to download anything? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">No download, no app store, no account. Just open <strong style="color:var(--text)">play.letterfrenzy.co.uk</strong> on any device with a browser and you're in. Everyone plays from their own phone or tablet — no shared screen needed.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Is it free? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">Yes, completely free — no ads, no subscriptions, no in-app purchases. Just show up and play.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Can we use our own categories? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">Absolutely. The host can add, remove, or edit any of the default categories when setting up a game. You can go with the classics or get creative — Movies That Make You Cry, Things in a Junk Drawer, whatever works for your group.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">How long does a game take? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">A typical 3-round game with 60-second timers takes around 15–25 minutes. You can adjust the number of rounds and timer length when setting up, so you can fit a quick game into a break or go longer for a full game night.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">What devices does it work on? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">Any device with a modern browser — iPhone, Android, tablet, laptop, desktop. No specific browser required. As long as everyone has a connection and a browser, they're good to go.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Can I play remotely with friends in different locations? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">Yes! Letter Frenzy works over any internet connection — great for family game nights over video call. Share the room code and everyone can join from wherever they are.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Who is the host and what can they do? <span class="faq-chevron">▼</span></div>
+        <div class="faq-a">The person who creates the room is the host. They choose the categories, rounds, and timer length, and start the game when everyone's ready. During the review phase, the host can override any challenge vote if there's a dispute.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- FEATURES -->
+  <section class="features">
+    <div class="section-head">
+      <div class="eyebrow">Built for everyone</div>
+      <h2 class="section-title">Everything you need, nothing you don't</h2>
+    </div>
+
+    <div class="feature-grid inner">
+      <div class="fchip"><span class="fi">👥</span>Up to 8 players</div>
+      <div class="fchip"><span class="fi">📱</span>Any device</div>
+      <div class="fchip"><span class="fi">✏️</span>Custom categories</div>
+      <div class="fchip"><span class="fi">🎵</span>Sound &amp; music</div>
+      <div class="fchip"><span class="fi">🗳️</span>Challenge votes</div>
+      <div class="fchip"><span class="fi">🆓</span>Totally free</div>
+    </div>
+  </section>
+
+  <!-- BOTTOM CTA -->
+  <section class="bottom-cta">
+    <p class="tagline">Ready to play?</p>
+    <p class="tagline-sub">Get everyone on the same room code and go.</p>
+    <a class="btn-play" href="https://play.letterfrenzy.co.uk" target="_blank">🎮 Play Now — it's free</a>
+  </section>
+
+  <footer>
+    <div>&copy; 2026 Letter Frenzy &nbsp;·&nbsp; <a href="https://letterfrenzy.co.uk">letterfrenzy.co.uk</a></div>
+    <div class="footer-links">
+      <a href="#" onclick="showPage('howtoplay');return false;">How to Play</a>
+      <span class="footer-sep">·</span>
+      <a href="#" onclick="showPage('terms');return false;">Terms &amp; Conditions</a>
+      <span class="footer-sep">·</span>
+      <a href="#" onclick="showPage('privacy');return false;">Privacy Policy</a>
+    </div>
+  </footer>
+</div>
+
+
+<!-- ════════════════════════════════ -->
+<!-- HOW TO PLAY PAGE                 -->
+<!-- ════════════════════════════════ -->
+<div class="page" id="page-howtoplay">
+  <div class="legal-page">
+    <button class="legal-back" onclick="showPage('home')">← Back to Letter Frenzy</button>
+
+    <div class="legal-inner" style="max-width:720px">
+      <div>
+        <div class="legal-title">How to Play</div>
+      </div>
+
+      <div class="htp-section">
+        <div class="goal-card">
+          <div class="gi">🎯</div>
+          <div>
+            <h3>The Goal</h3>
+            <p>Fill every category with a word starting with the round's letter — faster and more uniquely than your opponents. Unique answers score more, so creativity beats speed.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="htp-section">
+        <div class="htp-section-label">How a round works</div>
+        <div class="round-steps">
+          <div class="round-step">
+            <div class="step-bubble" style="background:var(--teal)">1</div>
+            <div>
+              <h4>A letter is revealed</h4>
+              <p>A random letter is drawn, or players secretly nominate a letter and one is chosen from the pool — keeping everyone guessing.</p>
+            </div>
+          </div>
+          <div class="round-step">
+            <div class="step-bubble" style="background:var(--coral)">2</div>
+            <div>
+              <h4>Race to fill the categories</h4>
+              <p>Type an answer for every category — all must start with the round's letter. The clock is ticking. Hit Submit early to lock in your answers.</p>
+            </div>
+          </div>
+          <div class="round-step">
+            <div class="step-bubble" style="background:var(--purple)">3</div>
+            <div>
+              <h4>Review, challenge, and score</h4>
+              <p>All answers are revealed. Flag anything that seems wrong and the group votes. Points are awarded automatically once the round is settled.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="htp-section">
+        <div class="htp-section-label">Scoring</div>
+        <div class="score-grid">
+          <div class="score-row">
+            <div class="score-pts" style="color:var(--mint)">10 pts</div>
+            <div class="score-desc">A valid answer nobody else wrote — unique answers are rewarded</div>
+          </div>
+          <div class="score-row">
+            <div class="score-pts" style="color:var(--yellow)">5 pts</div>
+            <div class="score-desc">A valid answer but someone else wrote something very similar</div>
+          </div>
+          <div class="score-row">
+            <div class="score-pts" style="color:var(--dim)">0 pts</div>
+            <div class="score-desc">Blank, wrong starting letter, or voted invalid by the group</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="htp-section">
+        <div class="challenge-card">
+          <div class="gi">⚠️</div>
+          <div>
+            <h3>Challenges &amp; Voting</h3>
+            <p>Spot a dodgy answer on the review screen? Hit <strong style="color:var(--coral)">Flag</strong> to challenge it. Everyone except the answer's owner gets 30 seconds to vote 👍 valid or 👎 invalid. The majority wins — the host breaks ties and can override any decision at any time.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="htp-section">
+        <div class="tips-card">
+          <h3>💡 Tips for winning</h3>
+          <div class="tip">
+            <div class="tip-dot"></div>
+            <p><strong>Submit early.</strong> Locking your answers before time's up lets you see how many others have submitted — and saves you from last-minute panic.</p>
+          </div>
+          <div class="tip">
+            <div class="tip-dot"></div>
+            <p><strong>Go obscure.</strong> Weird-but-valid answers score just as much as obvious ones. If nobody else writes the same thing, you get full points.</p>
+          </div>
+          <div class="tip">
+            <div class="tip-dot"></div>
+            <p><strong>In Pick mode, be sneaky.</strong> Your letter nomination is secret — pick one that's easy for you and hard for the rest of the room.</p>
+          </div>
+        </div>
+      </div>
+
+      <a class="btn-play" href="https://letterfrenzy.co.uk" target="_blank" style="align-self:flex-start">🎮 Play Now — it's free</a>
+    </div>
+
+    <button class="legal-back" onclick="showPage('home')">← Back to Letter Frenzy</button>
+  </div>
+
+  <footer>
+    <div>&copy; 2026 Letter Frenzy</div>
+    <div class="footer-links">
+      <a href="#" onclick="showPage('howtoplay');return false;">How to Play</a>
+      <span class="footer-sep">·</span>
+      <a href="#" onclick="showPage('terms');return false;">Terms &amp; Conditions</a>
+      <span class="footer-sep">·</span>
+      <a href="#" onclick="showPage('privacy');return false;">Privacy Policy</a>
+    </div>
+  </footer>
+</div>
+
+
+<!-- ════════════════════════════════ -->
+<!-- TERMS & CONDITIONS               -->
+<!-- ════════════════════════════════ -->
+<div class="page" id="page-terms">
+  <div class="legal-page">
+    <button class="legal-back" onclick="showPage('home')">← Back to Letter Frenzy</button>
+
+    <div class="legal-inner">
+      <div>
+        <div class="legal-title">Terms &amp; Conditions</div>
+        <div class="legal-date">Last updated: September 2026</div>
+      </div>
+      <div class="legal-section">
+        <h3>1. Acceptance of Terms</h3>
+        <p>By accessing or using Letter Frenzy at play.letterfrenzy.co.uk ("the Game"), you agree to be bound by these Terms &amp; Conditions. If you do not agree, please do not use the Game.</p>
+      </div>
+      <div class="legal-section">
+        <h3>2. Use of the Game</h3>
+        <p>Letter Frenzy is a free, browser-based multiplayer word game. You agree to use it only for lawful, personal, and non-commercial purposes. You must not:</p>
+        <ul>
+          <li>Use the Game to transmit harmful, offensive, or illegal content</li>
+          <li>Attempt to disrupt or interfere with the Game's servers or functionality</li>
+          <li>Reverse engineer, copy, or redistribute any part of the Game</li>
+        </ul>
+      </div>
+      <div class="legal-section">
+        <h3>3. No Account Required</h3>
+        <p>Letter Frenzy does not require you to create an account. Player names and game data are temporary and not stored beyond the duration of a game session.</p>
+      </div>
+      <div class="legal-section">
+        <h3>4. Intellectual Property</h3>
+        <p>All content, design, and code associated with Letter Frenzy is the property of its creator. You may not reproduce, distribute, or create derivative works without permission.</p>
+      </div>
+      <div class="legal-section">
+        <h3>5. Disclaimer of Warranties</h3>
+        <p>Letter Frenzy is provided "as is" without warranties of any kind. We do not guarantee uninterrupted availability and reserve the right to modify or discontinue the Game at any time without notice.</p>
+      </div>
+      <div class="legal-section">
+        <h3>6. Limitation of Liability</h3>
+        <p>To the fullest extent permitted by law, we shall not be liable for any indirect, incidental, or consequential damages arising from your use of the Game.</p>
+      </div>
+      <div class="legal-section">
+        <h3>7. Changes to These Terms</h3>
+        <p>We may update these Terms from time to time. Continued use of the Game after changes are posted constitutes acceptance of the updated Terms.</p>
+      </div>
+      <div class="legal-section">
+        <h3>8. Governing Law</h3>
+        <p>These Terms are governed by the laws of England and Wales. Any disputes shall be subject to the exclusive jurisdiction of the courts of England and Wales.</p>
+      </div>
+    </div>
+
+    <button class="legal-back" onclick="showPage('home')">← Back to Letter Frenzy</button>
+  </div>
+
+  <footer>
+    <div>&copy; 2026 Letter Frenzy</div>
+    <div class="footer-links">
+      <a href="#" onclick="showPage('howtoplay');return false;">How to Play</a>
+      <span class="footer-sep">·</span>
+      <a href="#" onclick="showPage('terms');return false;">Terms &amp; Conditions</a>
+      <span class="footer-sep">·</span>
+      <a href="#" onclick="showPage('privacy');return false;">Privacy Policy</a>
+    </div>
+  </footer>
+</div>
+
+
+<!-- ════════════════════════════════ -->
+<!-- PRIVACY POLICY                   -->
+<!-- ════════════════════════════════ -->
+<div class="page" id="page-privacy">
+  <div class="legal-page">
+    <button class="legal-back" onclick="showPage('home')">← Back to Letter Frenzy</button>
+
+    <div class="legal-inner">
+      <div>
+        <div class="legal-title">Privacy Policy</div>
+        <div class="legal-date">Last updated: September 2026</div>
+      </div>
+      <div class="legal-section">
+        <h3>1. Overview</h3>
+        <p>Letter Frenzy is designed with privacy in mind. We do not require accounts, do not collect personal data, and do not run advertising. This policy explains what limited data is processed when you play.</p>
+      </div>
+      <div class="legal-section">
+        <h3>2. Data We Do Not Collect</h3>
+        <p>We do not collect, store, or process:</p>
+        <ul>
+          <li>Names, email addresses, or any account information</li>
+          <li>Payment information (the Game is free)</li>
+          <li>Device identifiers or persistent tracking identifiers</li>
+          <li>Location data</li>
+        </ul>
+      </div>
+      <div class="legal-section">
+        <h3>3. Temporary Game Data</h3>
+        <p>When you play, temporary data (your chosen player name, answers, and scores) is passed through Supabase Realtime to synchronise gameplay between players in the same room. This data is not persisted to a database after your game session ends and is not associated with any personal identity.</p>
+      </div>
+      <div class="legal-section">
+        <h3>4. Cookies &amp; Local Storage</h3>
+        <p>Letter Frenzy uses browser local storage only to remember lightweight preferences such as your sound settings within a session. No tracking cookies are set. No third-party advertising or analytics scripts are loaded.</p>
+      </div>
+      <div class="legal-section">
+        <h3>5. Third-Party Services</h3>
+        <p>The Game is hosted on Netlify and uses Supabase for real-time multiplayer communication. Both services operate under their own privacy policies. No personal data is shared with any advertising networks or data brokers.</p>
+      </div>
+      <div class="legal-section">
+        <h3>6. Children's Privacy</h3>
+        <p>Letter Frenzy does not knowingly collect any data from children under the age of 13. Because no personal data is collected at all, the Game is safe for family use.</p>
+      </div>
+      <div class="legal-section">
+        <h3>7. Changes to This Policy</h3>
+        <p>We may update this Privacy Policy occasionally. Any changes will be reflected on this page with an updated date. Continued use of the Game constitutes acceptance of the updated policy.</p>
+      </div>
+      <div class="legal-section">
+        <h3>8. Contact</h3>
+        <p>If you have any questions about this Privacy Policy, you can reach us via the contact details on <a href="https://letterfrenzy.co.uk" style="color:var(--teal)">letterfrenzy.co.uk</a>.</p>
+      </div>
+    </div>
+
+    <button class="legal-back" onclick="showPage('home')">← Back to Letter Frenzy</button>
+  </div>
+
+  <footer>
+    <div>&copy; 2026 Letter Frenzy</div>
+    <div class="footer-links">
+      <a href="#" onclick="showPage('howtoplay');return false;">How to Play</a>
+      <span class="footer-sep">·</span>
+      <a href="#" onclick="showPage('terms');return false;">Terms &amp; Conditions</a>
+      <span class="footer-sep">·</span>
+      <a href="#" onclick="showPage('privacy');return false;">Privacy Policy</a>
+    </div>
+  </footer>
+</div>
+
+
+<script>
+// ── Page routing ──────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── FAQ accordion ─────────────────────────────────────────
+function toggleFaq(el) {
+  const item = el.closest('.faq-item');
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+  if (!wasOpen) item.classList.add('open');
+}
+
+// ── Stars ─────────────────────────────────────────────────
+(function() {
+  const cv = document.getElementById('stars');
+  const cx = cv.getContext('2d');
+  let stars = [];
+
+  function resize() {
+    cv.width  = window.innerWidth;
+    cv.height = window.innerHeight;
+    stars = Array.from({ length: 170 }, () => ({
+      x:     Math.random() * cv.width,
+      y:     Math.random() * cv.height,
+      r:     Math.random() * 1.3 + 0.3,
+      speed: 0.003 + Math.random() * 0.006,
+      phase: Math.random() * Math.PI * 2
+    }));
+  }
+
+  function draw(ts) {
+    cx.clearRect(0, 0, cv.width, cv.height);
+    stars.forEach(s => {
+      const a = 0.25 + 0.55 * Math.abs(Math.sin(ts * 0.001 * s.speed * 200 + s.phase));
+      cx.beginPath();
+      cx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      cx.fillStyle = `rgba(255,255,255,${a.toFixed(2)})`;
+      cx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  requestAnimationFrame(draw);
+})();
+
+// ── Logo wave delays ─────────────────────────────────────
+(function() {
+  document.querySelectorAll('.logo span:not(.space)').forEach((s, i) => {
+    s.style.animationDelay = (i * 0.1) + 's';
+  });
+})();
+
+// ── Floating letters ─────────────────────────────────────
+(function() {
+  const FL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const COLS = ['#FF5F6D','#FFC371','#38EF7D','#A29BFE','#FFE234','#11998E'];
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;';
+  document.body.appendChild(wrap);
+  for (let i = 0; i < 26; i++) {
+    const el = document.createElement('span');
+    const color = COLS[Math.floor(Math.random() * COLS.length)];
+    const size  = 13 + Math.random() * 16;
+    const x     = Math.random() * 98;
+    const y     = Math.random() * 98;
+    const dur   = 16 + Math.random() * 20;
+    const delay = -(Math.random() * dur);
+    el.textContent = FL[Math.floor(Math.random() * FL.length)];
+    el.style.cssText = `position:absolute;left:${x}%;top:${y}%;font-family:'Fredoka One',cursive;font-size:${size}px;color:${color};opacity:${(0.07 + Math.random() * 0.11).toFixed(2)};animation:floatLetter ${dur}s ${delay}s ease-in-out infinite;user-select:none;`;
+    wrap.appendChild(el);
+  }
+})();
+
+// ── Letter tile animation ─────────────────────────────────
+(function() {
+  const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const CATEGORY_SETS = [
+    ['Name', 'Country', 'Food', 'Animal', 'Famous Person'],
+    ['Sport', 'City', 'Movie', 'Brand', 'Fruit'],
+    ['Colour', 'Job', 'TV Show', 'Animal', 'Band'],
+    ['Name', 'Food', 'Country', 'Sport', 'Famous Person'],
+  ];
+
+  const tile  = document.getElementById('tile');
+  const pills = Array.from(document.getElementById('pills').children);
+  let catIdx  = 0;
+
+  function lightPills(cats) {
+    pills.forEach((p, i) => {
+      p.classList.remove('lit');
+      setTimeout(() => {
+        p.textContent = cats[i];
+        p.classList.add('lit');
+        setTimeout(() => p.classList.remove('lit'), 1800);
+      }, i * 90);
+    });
+  }
+
+  function spin() {
+    const totalFrames = 22 + Math.floor(Math.random() * 8);
+    let frame = 0;
+    function step() {
+      tile.textContent = LETTERS[Math.floor(Math.random() * LETTERS.length)];
+      frame++;
+      const remaining = totalFrames - frame;
+      if (remaining > 0) {
+        setTimeout(step, remaining > 5 ? 90 : 180 + (5 - remaining) * 70);
+      } else {
+        tile.textContent = LETTERS[Math.floor(Math.random() * LETTERS.length)];
+        tile.style.transform = 'scale(1.09)';
+        setTimeout(() => { tile.style.transform = ''; }, 260);
+        catIdx = (catIdx + 1) % CATEGORY_SETS.length;
+        lightPills(CATEGORY_SETS[catIdx]);
+      }
+    }
+    step();
+  }
+
+  setTimeout(spin, 1400);
+  setInterval(spin, 7000);
+  setTimeout(() => lightPills(CATEGORY_SETS[0]), 300);
+})();
+</script>
