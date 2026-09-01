@@ -228,6 +228,15 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
 .fs-sm { font-size: .85rem; }
 .submitted-badge { display: inline-flex; align-items: center; gap: 4px; background: rgba(56,239,125,.15); color: var(--mint); font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
 
+/* ── Wave logo ── */
+.wave-logo { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.wave-logo .word { display: flex; }
+.wave-logo .wl { display: inline-block; animation: waveLetter 1.8s ease-in-out infinite; }
+@keyframes waveLetter {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+
 @media (min-width: 480px) {
   .logo { font-size: 4rem; }
   .reveal-letter { font-size: 10rem; }
@@ -246,7 +255,7 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
 <div class="screen" id="screen-home" style="justify-content:center;padding-top:max(40px,env(safe-area-inset-top));padding-bottom:max(40px,env(safe-area-inset-bottom))">
   <div style="display:flex;flex-direction:column;align-items:center;gap:40px;width:100%;max-width:380px;padding:0 8px">
     <div class="text-center" style="margin-top:16px">
-      <div class="logo" style="font-size:clamp(3.5rem,14vw,5rem);line-height:1.05">Letter<br>Frenzy</div>
+      <div class="logo wave-logo" style="font-size:clamp(3.5rem,14vw,5rem);line-height:1.05" id="wave-logo"></div>
       <div class="logo-sub" style="margin-top:10px;font-size:0.95rem;letter-spacing:3px">Multiplayer Word Game</div>
     </div>
     <div style="width:100%;display:flex;flex-direction:column;gap:14px">
@@ -490,6 +499,7 @@ let S = {
 window.addEventListener('DOMContentLoaded', () => {
   db = supabase.createClient(SB_URL, SB_KEY);
   initStars();
+  initWaveLogo();
   buildAvatarGrids('setup');
   buildAvatarGrids('join');
   buildSetupUI();
@@ -497,29 +507,70 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ═══════════════════════════════════════════
+// WAVE LOGO
+// ═══════════════════════════════════════════
+function initWaveLogo() {
+  const el = document.getElementById('wave-logo');
+  if (!el) return;
+  const words = ['Letter', 'Frenzy'];
+  let i = 0;
+  el.innerHTML = words.map(word => {
+    const spans = word.split('').map(ch => {
+      const delay = (i++ * 0.1).toFixed(1);
+      return `<span class="wl" style="animation-delay:${delay}s">${ch}</span>`;
+    }).join('');
+    return `<div class="word">${spans}</div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════
 // STARS BACKGROUND
 // ═══════════════════════════════════════════
 function initStars() {
   const c = document.getElementById('stars');
   const ctx = c.getContext('2d');
-  let stars = [];
-  const resize = () => { c.width = innerWidth; c.height = innerHeight; spawnStars(); };
-  const spawnStars = () => {
-    stars = Array.from({length: 120}, () => ({
-      x: Math.random() * c.width, y: Math.random() * c.height,
-      r: Math.random() * 1.5 + .3, speed: Math.random() * .3 + .05,
-      opacity: Math.random() * .7 + .1
+  const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const COLORS = ['#FF5F6D','#FFC371','#FFE234','#38EF7D','#11998E','#A29BFE','#FF8B94','#74B9FF'];
+  let letters = [];
+
+  const resize = () => { c.width = innerWidth; c.height = innerHeight; spawnLetters(); };
+  const spawnLetters = () => {
+    letters = Array.from({length: 38}, () => ({
+      x: Math.random() * c.width,
+      y: Math.random() * c.height,
+      char: ALPHA[Math.floor(Math.random() * ALPHA.length)],
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      size: Math.random() * 14 + 9,
+      speed: Math.random() * 0.4 + 0.08,
+      opacity: Math.random() * 0.25 + 0.07,
+      drift: (Math.random() - 0.5) * 0.18,
+      rot: (Math.random() - 0.5) * 0.6,
+      rotSpeed: (Math.random() - 0.5) * 0.008,
     }));
   };
+
   const draw = () => {
     ctx.clearRect(0, 0, c.width, c.height);
-    stars.forEach(s => {
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,255,${s.opacity})`;
-      ctx.fill();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    letters.forEach(s => {
+      ctx.save();
+      ctx.translate(s.x, s.y);
+      ctx.rotate(s.rot);
+      ctx.font = `700 ${s.size}px 'Fredoka One', cursive`;
+      ctx.fillStyle = s.color;
+      ctx.globalAlpha = s.opacity;
+      ctx.fillText(s.char, 0, 0);
+      ctx.restore();
       s.y -= s.speed;
-      if (s.y < -2) { s.y = c.height + 2; s.x = Math.random() * c.width; }
+      s.x += s.drift;
+      s.rot += s.rotSpeed;
+      if (s.y < -20) {
+        s.y = c.height + 20;
+        s.x = Math.random() * c.width;
+        s.char = ALPHA[Math.floor(Math.random() * ALPHA.length)];
+        s.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+      }
     });
     requestAnimationFrame(draw);
   };
