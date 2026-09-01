@@ -162,8 +162,8 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
 @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-7px)} 40%,80%{transform:translateX(7px)} }
 .shake { animation: shake .4s ease; }
 
-/* ── Tie-break modal ── */
-#tiebreak-modal[hidden] { display: none !important; }
+/* ── Modals / conditional panels ── */
+#tiebreak-modal[hidden], #join-in-progress[hidden] { display: none !important; }
 
 /* ── Loading overlay ── */
 #loading { position: fixed; inset: 0; z-index: 99; background: rgba(10,9,26,.9); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
@@ -848,12 +848,11 @@ function showScreen(name) {
 function goSetup() { showScreen('setup'); }
 function goJoin(prefillCode) {
   showScreen('join');
-  // Reset state: show form, hide in-progress card
+  // Always reset: show form, hide in-progress card
   document.getElementById('join-form').hidden = false;
   document.getElementById('join-in-progress').hidden = true;
-  if (prefillCode) {
-    document.getElementById('join-code').value = prefillCode.toUpperCase();
-  }
+  // Prefill code if coming from a share link, otherwise clear stale code
+  document.getElementById('join-code').value = prefillCode ? prefillCode.toUpperCase() : '';
 }
 
 // ═══════════════════════════════════════════
