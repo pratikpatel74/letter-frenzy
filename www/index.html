@@ -1,6 +1,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Letter Frenzy</title>
+
+<title>Letter Frenzy — The Free Multiplayer Party Word Game</title>
+<meta name="description" content="Pick a letter, race the clock, outsmart your friends. Letter Frenzy is the free multiplayer word game for up to 8 players — no download, works on any device.">
+
+<!-- Open Graph -->
+<meta property="og:type"        content="website">
+<meta property="og:site_name"   content="Letter Frenzy">
+<meta property="og:title"       content="Letter Frenzy — The Free Multiplayer Party Word Game">
+<meta property="og:description" content="Pick a letter, race the clock, outsmart your friends. Free to play, up to 8 players, no download needed.">
+<meta property="og:url"         content="https://letterfrenzy.co.uk">
+<meta property="og:image"       content="https://letterfrenzy.co.uk/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<!-- Twitter / X -->
+<meta name="twitter:card"        content="summary_large_image">
+<meta name="twitter:title"       content="Letter Frenzy — The Free Multiplayer Party Word Game">
+<meta name="twitter:description" content="Pick a letter, race the clock, outsmart your friends. Free to play, up to 8 players, no download needed.">
+<meta name="twitter:image"       content="https://letterfrenzy.co.uk/og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 
@@ -29,12 +47,6 @@ body {
   overflow-x: hidden;
 }
 
-canvas#stars {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-}
 
 /* ── Page system ── */
 .page { display: none; }
@@ -682,8 +694,6 @@ footer a:hover { color: var(--text); }
 }
 </style>
 
-<canvas id="stars"></canvas>
-
 <!-- ════════════════════════════════ -->
 <!-- HOME PAGE                        -->
 <!-- ════════════════════════════════ -->
@@ -1077,8 +1087,10 @@ function toggleFaq(el) {
   if (!wasOpen) item.classList.add('open');
 }
 
-// ── Stars ─────────────────────────────────────────────────
+// ── Stars removed ─────────────────────────────────────────
 (function() {
+  // Stars removed — floating letters provide atmosphere
+  if (false) {
   const cv = document.getElementById('stars');
   const cx = cv.getContext('2d');
   let stars = [];
@@ -1110,6 +1122,7 @@ function toggleFaq(el) {
   resize();
   window.addEventListener('resize', resize);
   requestAnimationFrame(draw);
+  } // end if(false)
 })();
 
 // ── Logo wave delays ─────────────────────────────────────
