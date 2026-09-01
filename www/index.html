@@ -655,8 +655,22 @@ footer a:hover { color: var(--text); }
 .logo span.space { display: inline-block; width: .28em; }
 
 @media (max-width: 600px) {
-  .hero { min-height: auto; padding: 60px 20px 52px; }
-  .htp-teaser { padding: 32px 20px; }
+  .hero {
+    min-height: auto;
+    padding: 52px 20px 44px;
+    justify-content: flex-start;
+  }
+  .logo { font-size: clamp(3rem, 12vw, 4.5rem); }
+  .showcase { margin: 24px 0 18px; }
+  .letter-tile {
+    width: clamp(155px, 46vw, 190px);
+    height: clamp(155px, 46vw, 190px);
+    font-size: clamp(6.5rem, 20vw, 9rem);
+  }
+  .tagline { font-size: clamp(1.7rem, 6vw, 2.2rem); }
+  .tagline-sub { font-size: clamp(.95rem, 3.2vw, 1.1rem); }
+  .btn-play { font-size: 1.1rem; padding: 17px 34px; }
+  .htp-teaser { padding: 28px 20px; }
 }
 
 @media (max-width: 560px) {
