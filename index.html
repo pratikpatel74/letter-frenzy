@@ -229,7 +229,9 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
 .submitted-badge { display: inline-flex; align-items: center; gap: 4px; background: rgba(56,239,125,.15); color: var(--mint); font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
 
 /* ── Wave logo ── */
-.wave-logo { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.wave-logo { display: flex; flex-direction: column; align-items: center; gap: 0;
+  background: none !important; -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: unset !important; background-clip: unset !important; }
 .wave-logo .word { display: flex; }
 .wave-logo .wl { display: inline-block; animation: waveLetter 1.8s ease-in-out infinite; }
 @keyframes waveLetter {
@@ -512,12 +514,17 @@ window.addEventListener('DOMContentLoaded', () => {
 function initWaveLogo() {
   const el = document.getElementById('wave-logo');
   if (!el) return;
+  // Gradient colours across the 12 letters: coral → orange → yellow
+  const palette = ['#FF5F6D','#FF6E69','#FF8B65','#FFA861','#FFC371','#FFD46A',
+                   '#FFE234','#FFD53A','#FFC84A','#FFB55A','#FF9C62','#FF8B6E'];
   const words = ['Letter', 'Frenzy'];
   let i = 0;
   el.innerHTML = words.map(word => {
     const spans = word.split('').map(ch => {
-      const delay = (i++ * 0.1).toFixed(1);
-      return `<span class="wl" style="animation-delay:${delay}s">${ch}</span>`;
+      const delay = (i * 0.12).toFixed(2);
+      const color = palette[i % palette.length];
+      i++;
+      return `<span class="wl" style="animation-delay:${delay}s;color:${color}">${ch}</span>`;
     }).join('');
     return `<div class="word">${spans}</div>`;
   }).join('');
