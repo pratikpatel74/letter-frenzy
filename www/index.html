@@ -693,6 +693,24 @@ footer a:hover { color: var(--text); }
   .feature-grid    { grid-template-columns: 1fr 1fr; }
   .score-pts       { min-width: 58px; }
 }
+
+/* Game Preview Card */
+.game-preview{background:var(--card);border-radius:22px;border:1.5px solid rgba(255,255,255,.11);padding:18px;width:100%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.04) inset;margin:36px 0 28px;display:flex;flex-direction:column;gap:13px}
+.gp-topbar{display:flex;justify-content:space-between;align-items:center}
+.gp-meta{font-size:.63rem;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;color:rgba(255,255,255,.28)}
+.gp-timer{width:36px;height:36px;border-radius:50%;border:2.5px solid var(--coral);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:.68rem;font-weight:700;color:var(--coral);transition:border-color .4s,color .4s}
+.gp-timer.low{border-color:var(--orange);color:var(--orange)}
+.gp-letter-row{display:flex;align-items:center;gap:16px}
+.game-preview .letter-tile{width:74px !important;height:74px !important;font-size:3.1rem !important;border-radius:16px;flex-shrink:0;margin:0}
+.gp-letter-lbl{font-size:.75rem;font-weight:700;color:rgba(255,255,255,.32);line-height:1.5}
+.gp-letter-lbl strong{display:block;font-family:'Fredoka One',cursive;font-size:1.25rem;color:rgba(255,255,255,.78);font-weight:400;line-height:1.25}
+.gp-fields{display:flex;flex-direction:column;gap:6px}
+.gp-field{display:flex;align-items:center;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.07);border-radius:10px;padding:8px 12px;gap:10px;transition:border-color .3s}
+.gp-field.lit{border-color:rgba(56,239,125,.4)}
+.gp-cat{font-size:.58rem;font-weight:800;letter-spacing:.9px;text-transform:uppercase;color:rgba(255,255,255,.28);min-width:58px;flex-shrink:0}
+.gp-val{font-size:.82rem;font-weight:700;color:rgba(255,255,255,.18);transition:color .3s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gp-field.lit .gp-val{color:var(--mint)}
+@media(max-width:480px){.game-preview{max-width:100%}.gp-letter-lbl strong{font-size:1.1rem}}
 </style>
 
 <!-- ════════════════════════════════ -->
@@ -707,15 +725,20 @@ footer a:hover { color: var(--text); }
       <div class="logo-sub">The party word game</div>
     </div>
 
-    <div class="showcase">
-      <div class="showcase-label">This round's letter is…</div>
-      <div class="letter-tile" id="tile">S</div>
-      <div class="category-pills" id="pills">
-        <div class="pill">Name</div>
-        <div class="pill">Country</div>
-        <div class="pill">Food</div>
-        <div class="pill">Animal</div>
-        <div class="pill">Famous Person</div>
+    <div class="game-preview">
+      <div class="gp-topbar">
+        <span class="gp-meta">Round 1 · 4 players</span>
+        <div class="gp-timer" id="gp-timer">60</div>
+      </div>
+      <div class="gp-letter-row">
+        <div class="letter-tile" id="tile">S</div>
+        <div class="gp-letter-lbl">All answers<br><strong>must start with…</strong></div>
+      </div>
+      <div class="gp-fields" id="gp-fields">
+        <div class="gp-field"><span class="gp-cat">Country</span><span class="gp-val">Sweden…</span></div>
+        <div class="gp-field"><span class="gp-cat">Food</span><span class="gp-val">Sushi…</span></div>
+        <div class="gp-field"><span class="gp-cat">Name</span><span class="gp-val">Sarah…</span></div>
+        <div class="gp-field"><span class="gp-cat">Animal</span><span class="gp-val">Snake…</span></div>
       </div>
     </div>
 
@@ -1121,25 +1144,71 @@ function toggleFaq(el) {
 (function() {
   const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   const CATEGORY_SETS = [
-    ['Name', 'Country', 'Food', 'Animal', 'Famous Person'],
-    ['Sport', 'City', 'Movie', 'Brand', 'Fruit'],
-    ['Colour', 'Job', 'TV Show', 'Animal', 'Band'],
-    ['Name', 'Food', 'Country', 'Sport', 'Famous Person'],
+    ['Country', 'Food', 'Name', 'Animal'],
+    ['Sport', 'City', 'Movie', 'Brand'],
+    ['Colour', 'Job', 'TV Show', 'Famous Person'],
+    ['Country', 'Food', 'Name', 'Fruit'],
   ];
 
-  const tile  = document.getElementById('tile');
-  const pills = Array.from(document.getElementById('pills').children);
-  let catIdx  = 0;
+  const LETTER_ANSWERS = {
+    A:{Country:'Australia',Food:'Apple pie',Name:'Alice',Animal:'Alligator',Sport:'Athletics',City:'Amsterdam',Movie:'Avatar',Brand:'Apple',Colour:'Amber',Job:'Architect','TV Show':'Atlanta','Famous Person':'Adele',Fruit:'Apricot'},
+    B:{Country:'Brazil',Food:'Burger',Name:'Ben',Animal:'Bear',Sport:'Basketball',City:'Barcelona',Movie:'Braveheart',Brand:'BMW',Colour:'Blue',Job:'Baker','TV Show':'Breaking Bad','Famous Person':'Beyoncé',Fruit:'Banana'},
+    C:{Country:'Canada',Food:'Curry',Name:'Clara',Animal:'Cat',Sport:'Cricket',City:'Cairo',Movie:'Clueless',Brand:'Chanel',Colour:'Cyan',Job:'Chef','TV Show':'Community','Famous Person':'Churchill',Fruit:'Cherry'},
+    D:{Country:'Denmark',Food:'Dumpling',Name:'David',Animal:'Dog',Sport:'Darts',City:'Dubai',Movie:'Dunkirk',Brand:'Disney',Colour:'Dark green',Job:'Doctor','TV Show':'Dexter','Famous Person':'Da Vinci',Fruit:'Dragon fruit'},
+    E:{Country:'Egypt',Food:'Eggs benedict',Name:'Emma',Animal:'Elephant',Sport:'Equestrian',City:'Edinburgh',Movie:'Elf',Brand:'eBay',Colour:'Emerald',Job:'Engineer','TV Show':'Euphoria','Famous Person':'Einstein',Fruit:'Elderberry'},
+    F:{Country:'France',Food:'Falafel',Name:'Freya',Animal:'Fox',Sport:'Football',City:'Florence',Movie:'Frozen',Brand:'Ford',Colour:'Fuchsia',Job:'Florist','TV Show':'Friends','Famous Person':'Federer',Fruit:'Fig'},
+    G:{Country:'Germany',Food:'Guacamole',Name:'George',Animal:'Gorilla',Sport:'Golf',City:'Glasgow',Movie:'Gladiator',Brand:'Google',Colour:'Gold',Job:'Gardener','TV Show':'Game of Thrones','Famous Person':'Gandhi',Fruit:'Grape'},
+    H:{Country:'Hungary',Food:'Hummus',Name:'Hannah',Animal:'Horse',Sport:'Hockey',City:'Helsinki',Movie:'Home Alone',Brand:'Honda',Colour:'Hazel',Job:'Historian','TV Show':'House','Famous Person':'Hawking',Fruit:'Honeydew'},
+    I:{Country:'Italy',Food:'Ice cream',Name:'Ivan',Animal:'Iguana',Sport:'Ice hockey',City:'Istanbul',Movie:'Inception',Brand:'IKEA',Colour:'Indigo',Job:'Illustrator','TV Show':'Inbetweeners','Famous Person':'Ibrahimović',Fruit:'Imbe'},
+    J:{Country:'Japan',Food:'Jerk chicken',Name:'Jack',Animal:'Jaguar',Sport:'Judo',City:'Jakarta',Movie:'Jaws',Brand:'Jaguar',Colour:'Jade',Job:'Journalist','TV Show':'Jane the Virgin','Famous Person':'Jobs',Fruit:'Jackfruit'},
+    K:{Country:'Kenya',Food:'Kebab',Name:'Kate',Animal:'Kangaroo',Sport:'Kayaking',City:'Kyoto',Movie:'Knives Out',Brand:"Kellogg's",Colour:'Khaki',Job:'Karate instructor','TV Show':'Killing Eve','Famous Person':'Kubrick',Fruit:'Kiwi'},
+    L:{Country:'Lebanon',Food:'Lasagne',Name:'Lily',Animal:'Lion',Sport:'Lacrosse',City:'Lisbon',Movie:'La La Land',Brand:'Lego',Colour:'Lavender',Job:'Lawyer','TV Show':'Lost','Famous Person':'Lincoln',Fruit:'Lemon'},
+    M:{Country:'Mexico',Food:'Moussaka',Name:'Maya',Animal:'Monkey',Sport:'Marathon',City:'Madrid',Movie:'Mamma Mia',Brand:"McDonald's",Colour:'Maroon',Job:'Mechanic','TV Show':'Mad Men','Famous Person':'Mozart',Fruit:'Mango'},
+    N:{Country:'Nigeria',Food:'Noodles',Name:'Noah',Animal:'Narwhal',Sport:'Netball',City:'Naples',Movie:'Notting Hill',Brand:'Nike',Colour:'Navy',Job:'Nurse','TV Show':'Narcos','Famous Person':'Newton',Fruit:'Nectarine'},
+    O:{Country:'Oman',Food:'Omelette',Name:'Olivia',Animal:'Ostrich',Sport:'Orienteering',City:'Oslo',Movie:'Oceans Eleven',Brand:'Oracle',Colour:'Olive',Job:'Optician','TV Show':'Orange is the New Black','Famous Person':'Obama',Fruit:'Orange'},
+    P:{Country:'Portugal',Food:'Paella',Name:'Paul',Animal:'Panda',Sport:'Polo',City:'Prague',Movie:'Parasite',Brand:'Pepsi',Colour:'Purple',Job:'Pharmacist','TV Show':'Peaky Blinders','Famous Person':'Picasso',Fruit:'Peach'},
+    Q:{Country:'Qatar',Food:'Quiche',Name:'Quinn',Animal:'Quail',Sport:'Squash',City:'Quebec',Movie:'Quiz Show',Brand:'Quorn',Colour:'Quartz',Job:'Quilter','TV Show':'Quantico','Famous Person':'Queen Victoria',Fruit:'Quince'},
+    R:{Country:'Romania',Food:'Risotto',Name:'Ruby',Animal:'Rabbit',Sport:'Rugby',City:'Rome',Movie:'Rocky',Brand:'Rolex',Colour:'Red',Job:'Reporter','TV Show':'Rick & Morty','Famous Person':'Ronaldo',Fruit:'Raspberry'},
+    S:{Country:'Sweden',Food:'Sushi',Name:'Sarah',Animal:'Snake',Sport:'Swimming',City:'Sydney',Movie:'Shrek',Brand:'Samsung',Colour:'Scarlet',Job:'Surgeon','TV Show':'Seinfeld','Famous Person':'Shakespeare',Fruit:'Strawberry'},
+    T:{Country:'Turkey',Food:'Tacos',Name:'Thomas',Animal:'Tiger',Sport:'Tennis',City:'Tokyo',Movie:'Titanic',Brand:'Toyota',Colour:'Teal',Job:'Teacher','TV Show':'Ted Lasso','Famous Person':'Tesla',Fruit:'Tangerine'},
+    U:{Country:'Uganda',Food:'Udon',Name:'Uma',Animal:'Urial',Sport:'Ultimate frisbee',City:'Ulaanbaatar',Movie:'Up',Brand:'Uber',Colour:'Umber',Job:'Underwriter','TV Show':'Ugly Betty','Famous Person':'Usain Bolt',Fruit:'Ugli fruit'},
+    V:{Country:'Vietnam',Food:'Vol-au-vent',Name:'Victor',Animal:'Vulture',Sport:'Volleyball',City:'Venice',Movie:'Vertigo',Brand:'Visa',Colour:'Violet',Job:'Vet','TV Show':'Veep','Famous Person':'Van Gogh',Fruit:'Victoria plum'},
+    W:{Country:'Wales',Food:'Waffle',Name:'Wendy',Animal:'Wolf',Sport:'Wrestling',City:'Warsaw',Movie:'Wall-E',Brand:'Walmart',Colour:'White',Job:'Writer','TV Show':'The Wire','Famous Person':'Warhol',Fruit:'Watermelon'},
+    X:{Country:'–',Food:'Xigua',Name:'Xander',Animal:'X-ray fish',Sport:'Extreme skiing',City:"Xi'an",Movie:'X-Men',Brand:'Xbox',Colour:'Xanadu',Job:'X-ray tech','TV Show':'X-Files','Famous Person':'Xavier Dolan',Fruit:'Xigua'},
+    Y:{Country:'Yemen',Food:'Yakitori',Name:'Yasmin',Animal:'Yak',Sport:'Yoga',City:'Yokohama',Movie:'Yesterday',Brand:'YouTube',Colour:'Yellow',Job:'Yoga teacher','TV Show':'You','Famous Person':'Yoko Ono',Fruit:'Yuzu'},
+    Z:{Country:'Zimbabwe',Food:'Ziti',Name:'Zoe',Animal:'Zebra',Sport:'Zumba',City:'Zurich',Movie:'Zoolander',Brand:'Zara',Colour:'Zinc',Job:'Zoologist','TV Show':"Zoey's Playlist",'Famous Person':'Zuckerberg',Fruit:'Ziziphus'},
+  };
 
-  function lightPills(cats) {
-    pills.forEach((p, i) => {
-      p.classList.remove('lit');
-      setTimeout(() => {
-        p.textContent = cats[i];
-        p.classList.add('lit');
-        setTimeout(() => p.classList.remove('lit'), 1800);
-      }, i * 90);
-    });
+  const tile    = document.getElementById('tile');
+  const fields  = Array.from(document.querySelectorAll('.gp-field'));
+  const catEls  = fields.map(f => f.querySelector('.gp-cat'));
+  const valEls  = fields.map(f => f.querySelector('.gp-val'));
+  const timerEl = document.getElementById('gp-timer');
+  let catIdx   = 0;
+  let timerVal = 60;
+
+  // Countdown timer — resets when a new letter lands
+  setInterval(() => {
+    timerVal = Math.max(0, timerVal - 1);
+    if (timerEl) {
+      timerEl.textContent = timerVal;
+      timerEl.classList.toggle('low', timerVal <= 10 && timerVal > 0);
+    }
+  }, 1000);
+
+  function lightFields(cats, letter) {
+    const answers = LETTER_ANSWERS[letter] || {};
+    fields.forEach(f => f.classList.remove('lit'));
+    setTimeout(() => {
+      fields.forEach((f, i) => {
+        setTimeout(() => {
+          const cat = cats[Math.min(i, cats.length - 1)];
+          catEls[i].textContent = cat;
+          valEls[i].textContent = (answers[cat] || letter + '…') + '…';
+          f.classList.add('lit');
+        }, i * 80);
+      });
+    }, 270);
   }
 
   function spin() {
@@ -1150,13 +1219,16 @@ function toggleFaq(el) {
       frame++;
       const remaining = totalFrames - frame;
       if (remaining > 0) {
-        setTimeout(step, remaining > 5 ? 90 : 180 + (5 - remaining) * 70);
+        setTimeout(step, remaining > 5 ? 110 : 180 + (5 - remaining) * 70);
       } else {
-        tile.textContent = LETTERS[Math.floor(Math.random() * LETTERS.length)];
+        const finalLetter = LETTERS[Math.floor(Math.random() * LETTERS.length)];
+        tile.textContent = finalLetter;
         tile.style.transform = 'scale(1.09)';
         setTimeout(() => { tile.style.transform = ''; }, 260);
-        catIdx = (catIdx + 1) % CATEGORY_SETS.length;
-        lightPills(CATEGORY_SETS[catIdx]);
+        catIdx   = (catIdx + 1) % CATEGORY_SETS.length;
+        timerVal = 45 + Math.floor(Math.random() * 16);
+        if (timerEl) { timerEl.textContent = timerVal; timerEl.classList.remove('low'); }
+        lightFields(CATEGORY_SETS[catIdx], finalLetter);
       }
     }
     step();
@@ -1164,6 +1236,6 @@ function toggleFaq(el) {
 
   setTimeout(spin, 1400);
   setInterval(spin, 7000);
-  setTimeout(() => lightPills(CATEGORY_SETS[0]), 300);
+  setTimeout(() => lightFields(CATEGORY_SETS[0], 'S'), 300);
 })();
 </script>
