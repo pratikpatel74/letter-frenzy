@@ -1014,10 +1014,8 @@ function showScreen(name) {
   }
   S.currentScreen = name;
   document.body.dataset.screen = name; // used by CSS for per-screen mute btn placement
-  // Background music routing
-  const LOBBY_SCREENS = new Set(['home','setup','join','lobby','howtoplay','pick']);
-  if (LOBBY_SCREENS.has(name)) startBgMusic('lobby');
-  else stopBgMusic(); // no jingle during playing — countdown ticks need to be heard clearly
+  // Background music removed — sound effects only
+  stopBgMusic();
 }
 
 function goSetup() { showScreen('setup'); }
