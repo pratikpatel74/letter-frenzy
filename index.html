@@ -225,6 +225,25 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
 .cat-tag input { flex: 1; background: none; border: none; color: #fff; font-family: 'Nunito', sans-serif; font-size: .95rem; font-weight: 600; padding: 4px 2px; outline: none; min-width: 0; }
 .cat-tag input:focus { border-bottom: 1.5px solid var(--teal); }
 .cat-remove { background: none; border: none; color: var(--coral); font-size: 1.2rem; cursor: pointer; line-height: 1; flex-shrink: 0; }
+.cat-remove:disabled { opacity:.28; cursor:not-allowed; }
+
+/* ── Category Preset Setup ── */
+.preset-rail { display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; }
+.preset-rail::-webkit-scrollbar { display:none; }
+.preset-chip { display:inline-flex; align-items:center; gap:5px; padding:7px 13px; border-radius:99px; border:2px solid; font-size:.82rem; font-weight:800; cursor:pointer; white-space:nowrap; scroll-snap-align:start; transition:all .18s; flex-shrink:0; background:transparent; }
+.preset-chip.active { transform:scale(1.04); }
+.cat-count-badge { font-family:'Space Mono',monospace; font-size:.8rem; font-weight:700; padding:3px 10px; border-radius:99px; transition:all .3s; }
+.cat-count-ok   { background:rgba(56,239,125,.18); color:var(--mint); }
+.cat-count-warn { background:rgba(255,226,52,.18); color:var(--yellow); }
+.cat-count-low  { background:rgba(255,95,109,.18); color:var(--coral); }
+.cat-add-row { margin-top:10px; }
+.cat-add-row input[type=text] { background:rgba(255,255,255,.04); border:1.5px dashed rgba(255,255,255,.2); color:rgba(255,255,255,.6); font-size:.95rem; }
+.cat-add-row input[type=text]:focus { border-color:var(--teal); border-style:solid; color:#fff; background:rgba(255,255,255,.07); }
+.cat-add-row input[type=text]::placeholder { color:rgba(255,255,255,.35); font-weight:500; }
+.cat-add-row input[type=text]:disabled { opacity:.4; cursor:not-allowed; }
+.preset-desc { min-height:1.1em; }
+@keyframes rowIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
+.cat-tag { animation:rowIn .15s ease; }
 
 /* ── Spacer / divider ── */
 .gap { height: 14px; }
@@ -362,12 +381,17 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
       <div class="text-dim fs-sm mt8" id="mode-hint">A random unused letter is drawn each round.</div>
     </div>
     <div class="card">
-      <div class="row mb14">
+      <div class="row mb8">
         <label style="margin:0">Categories</label>
-        <button class="btn btn-ghost btn-sm" onclick="addCategory()">+ Add</button>
+        <span class="cat-count-badge cat-count-low" id="cat-count">4/8</span>
       </div>
+      <div class="preset-desc text-dim fs-sm mb8" id="preset-desc">Tap a pack to load it — or build your own below.</div>
+      <div class="preset-rail mb14" id="preset-rail"></div>
       <div id="cat-list"></div>
-      <div class="text-dim fs-sm mt8">Min 4, max 8 · tap × to remove or edit any category</div>
+      <div class="cat-add-row">
+        <input type="text" id="cat-add-input" placeholder="+ Add your own category…" maxlength="30">
+      </div>
+      <div class="text-dim fs-sm mt8">Min 4 · max 8 · tap × to remove or edit any</div>
     </div>
     <button class="btn btn-coral" onclick="createRoom()" style="max-width:420px">Create Room →</button>
     <div style="height:20px"></div>
@@ -643,6 +667,22 @@ const SB_KEY = 'sb_publishable_3Y96gLmPnl6I4Bk9kGJKXA_QRWT0gNt';
 const EMOJIS = ['🦊','🐺','🦁','🐯','🐸','🦋','🦄','🐙','🐧','🦜','🦔','🐻'];
 const COLORS = ['#FF6B6B','#FF9F43','#FFE234','#38EF7D','#00CEC9','#74B9FF','#A29BFE','#FD79A8'];
 const DEF_CATS = ['Name','Country','Food','Famous Person'];
+const PRESET_PACKS = [
+  { id:'classic', label:'🎯 Classic',     color:'#FF5F6D', desc:'The perfect starter set for any crowd.',
+    cats:['Name','Country','Food','Animal','Famous Person','Colour','Sport','City'] },
+  { id:'movies',  label:'🎬 Movies & TV', color:'#A29BFE', desc:'For film buffs and TV obsessives.',
+    cats:['Actor','Film','TV Show','Character','Director','Superhero','Animated Film'] },
+  { id:'sport',   label:'⚽ Sport',           color:'#11998E', desc:'Break a sweat without leaving the sofa.',
+    cats:['Sport','Team','Athlete','Country','Stadium','Trophy','Game'] },
+  { id:'food',    label:'🍕 Food & Drink', color:'#FFC371', desc:'For foodies and the perpetually hungry.',
+    cats:['Food','Drink','Cuisine','Ingredient','Snack','Dessert','Restaurant'] },
+  { id:'nature',  label:'🌿 Nature',       color:'#38EF7D', desc:'The great outdoors, indoors.',
+    cats:['Animal','Bird','Plant','Country','Ocean','Mountain','Element'] },
+  { id:'music',   label:'🎵 Music',        color:'#FFE234', desc:'Turn it up — test your music knowledge.',
+    cats:['Band','Song','Genre','Instrument','Album','Artist','Festival'] },
+  { id:'custom',  label:'✏️ Custom',     color:'#9B9BB8', desc:'Start from scratch — build your own pack.',
+    cats:[] },
+];
 
 // ═══════════════════════════════════════════
 // STATE
@@ -814,6 +854,7 @@ function buildSetupUI() {
     `<div class="pill${i===1?' on':''}" onclick="setPill(this,'timer-p',${v})">${l}</div>`).join('');
 
   renderCatList();
+  initCatSetup();
 }
 
 function setPill(el, group, val) {
@@ -839,14 +880,17 @@ function setLetterMode(mode) {
 
 function renderCatList() {
   const el = document.getElementById('cat-list');
+  const canRemove = S.setupCats.length > 4;
   el.innerHTML = S.setupCats.map((c, i) => `
-    <div class="cat-tag">
+    <div class="cat-tag" id="ctag-${i}">
       <input type="text" value="${esc(c)}" maxlength="30"
         placeholder="Category name"
         onchange="editCat(${i}, this.value)"
         onblur="editCat(${i}, this.value)">
-      <button class="cat-remove" onclick="removeCat(${i})" title="Remove">×</button>
+      <button class="cat-remove" onclick="removeCat(${i})" title="Remove"
+        ${canRemove ? '' : 'disabled'}>×</button>
     </div>`).join('');
+  updateCatCount();
 }
 
 function editCat(i, val) {
@@ -855,18 +899,79 @@ function editCat(i, val) {
   S.setupCats[i] = v;
 }
 
-function addCategory() {
+function addCategory() { addCategoryInline(); }
+
+function addCategoryInline() {
   if (S.setupCats.length >= 8) { toast('Max 8 categories'); return; }
-  const name = prompt('Category name:')?.trim();
-  if (!name) return;
+  const input = document.getElementById('cat-add-input');
+  if (!input) return;
+  const name = (input.value || '').trim();
+  if (!name) { input.focus(); return; }
   S.setupCats.push(name);
+  input.value = '';
   renderCatList();
+  setTimeout(() => {
+    const last = document.getElementById('ctag-' + (S.setupCats.length - 1));
+    if (last) last.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }, 50);
 }
 
 function removeCat(i) {
   if (S.setupCats.length <= 4) { toast('Minimum 4 categories — edit the name instead'); return; }
   S.setupCats.splice(i, 1);
   renderCatList();
+}
+
+// ═══════════════════════════════════════════
+// CATEGORY PRESET HELPERS
+// ═══════════════════════════════════════════
+function initCatSetup() {
+  const rail = document.getElementById('preset-rail');
+  if (!rail) return;
+  rail.innerHTML = PRESET_PACKS.map(p =>
+    `<div class="preset-chip" id="chip-${p.id}"
+       style="border-color:${p.color};color:${p.color}"
+       onclick="selectPreset('${p.id}')">${p.label}</div>`
+  ).join('');
+  const input = document.getElementById('cat-add-input');
+  if (input) {
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); addCategoryInline(); }
+    });
+  }
+  selectPreset('classic');
+}
+
+function selectPreset(id) {
+  const pack = PRESET_PACKS.find(p => p.id === id);
+  if (!pack) return;
+  document.querySelectorAll('.preset-chip').forEach(c => {
+    c.classList.remove('active');
+    c.style.background = 'transparent';
+  });
+  const chip = document.getElementById('chip-' + id);
+  if (chip) {
+    chip.classList.add('active');
+    chip.style.background = pack.color + '22';
+  }
+  const descEl = document.getElementById('preset-desc');
+  if (descEl) descEl.textContent = pack.desc;
+  S.setupCats = id === 'custom' ? [...DEF_CATS] : [...pack.cats];
+  renderCatList();
+}
+
+function updateCatCount() {
+  const badge = document.getElementById('cat-count');
+  if (!badge) return;
+  const n = S.setupCats.length;
+  badge.textContent = n + '/8';
+  badge.className = 'cat-count-badge ' + (n < 4 ? 'cat-count-low' : n >= 8 ? 'cat-count-warn' : 'cat-count-ok');
+  const input = document.getElementById('cat-add-input');
+  if (input) {
+    const atMax = n >= 8;
+    input.disabled = atMax;
+    input.placeholder = atMax ? 'Remove one to add more' : '+ Add your own category…';
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -1451,21 +1556,20 @@ async function saveAnswerDraft(cat, val) {
 }
 
 async function submitAnswers() {
-  // Save all drafts immediately then mark submitted
+  // Save all drafts in parallel then mark submitted
   const cats = getCats();
-  for (const cat of cats) {
+  await Promise.all(cats.map(cat => {
     const val = S.myAnswerDraft[cat] || '';
-    await db.from('letter_frenzy_answers').upsert({
+    return db.from('letter_frenzy_answers').upsert({
       room_id: S.roomId, player_id: S.playerId,
       round_number: S.room.current_round,
       category: cat, answer_text: val,
       letter: S.room.current_letter,
       submitted: true
     }, { onConflict: 'room_id,player_id,round_number,category' });
-  }
+  }));
   document.getElementById('submit-btn').disabled = true;
   document.getElementById('submit-btn').textContent = '✅ Submitted';
-  // Disable inputs
   document.querySelectorAll('#answer-fields input').forEach(i => i.readOnly = true);
   toast('Answers submitted!');
 }
@@ -1590,10 +1694,10 @@ async function triggerScoring() {
       });
     }
 
-    // Apply score updates
-    for (const u of updates) {
-      await db.from('letter_frenzy_answers').update({ round_score: u.round_score, submitted: true }).eq('id', u.id);
-    }
+    // Apply score updates in parallel
+    await Promise.all(updates.map(u =>
+      db.from('letter_frenzy_answers').update({ round_score: u.round_score, submitted: true }).eq('id', u.id)
+    ));
 
     // Update player total scores — fetch fresh from DB to avoid using stale S.players
     const playerScoreAdds = {};
@@ -1604,11 +1708,11 @@ async function triggerScoring() {
     });
 
     const { data: freshPlayers } = await db.from('letter_frenzy_players').select('id, total_score').eq('room_id', S.roomId);
-    for (const [pid, add] of Object.entries(playerScoreAdds)) {
+    await Promise.all(Object.entries(playerScoreAdds).map(([pid, add]) => {
       const player = freshPlayers?.find(p => p.id === pid);
-      if (!player) continue;
-      await db.from('letter_frenzy_players').update({ total_score: (player.total_score || 0) + add }).eq('id', pid);
-    }
+      if (!player) return Promise.resolve();
+      return db.from('letter_frenzy_players').update({ total_score: (player.total_score || 0) + add }).eq('id', pid);
+    }));
 
     // Advance to review
     await db.from('letter_frenzy_rooms').update({ status: 'review' }).eq('id', S.roomId);
