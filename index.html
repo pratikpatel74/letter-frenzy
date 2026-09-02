@@ -1918,8 +1918,11 @@ function renderReview() {
         </div>`;
       }
 
-      const countryWarn = (cat.toLowerCase() === 'country' && text && !isWrong && score > 0 && !isKnownCountry(text))
-        ? `<div style="font-size:.7rem;color:var(--yellow);padding:2px 0 4px 42px">⚠️ Not a recognised country</div>`
+      const isCountryCat = cat.toLowerCase() === 'country' && text && !isWrong && score > 0;
+      const countryWarn = isCountryCat
+        ? (isKnownCountry(text)
+          ? `<div style="font-size:.7rem;color:var(--mint);padding:2px 0 4px 42px">✓ Recognised country</div>`
+          : `<div style="font-size:.7rem;color:var(--yellow);padding:2px 0 4px 42px">⚠️ Not a recognised country</div>`)
         : '';
       return `<div class="${cardCls}" id="ac-${ans.id}" style="flex-direction:column;align-items:stretch;gap:0">
         <div style="display:flex;align-items:center;gap:10px">
