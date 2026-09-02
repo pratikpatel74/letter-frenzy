@@ -727,7 +727,7 @@ footer a:hover { color: var(--text); }
 /* Game Preview Card */
 .game-preview{background:var(--card);border-radius:22px;border:1.5px solid rgba(255,255,255,.11);padding:18px;width:100%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.04) inset;margin:36px 0 28px;display:flex;flex-direction:column;gap:13px}
 .gp-topbar{display:flex;justify-content:space-between;align-items:center}
-.gp-meta{font-size:.63rem;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;color:rgba(255,255,255,.28)}
+.gp-meta{font-size:.63rem;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;color:rgba(255,255,255,.28)}.gp-meta-left{display:flex;align-items:baseline;gap:0}.gp-round{font-size:.63rem;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;color:rgba(255,255,255,.28)}.gp-round #gp-round-num{font-family:'Fredoka One',cursive;font-size:1.05rem;font-weight:400;color:var(--mint);letter-spacing:0;margin-left:5px;display:inline-block;transition:transform .2s,opacity .2s}.gp-players{font-size:.63rem;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;color:rgba(255,255,255,.28)}
 .gp-timer{width:36px;height:36px;border-radius:50%;border:2.5px solid var(--coral);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:.68rem;font-weight:700;color:var(--coral);transition:border-color .4s,color .4s}
 .gp-timer.low{border-color:var(--orange);color:var(--orange)}
 .gp-letter-row{display:flex;align-items:center;gap:16px;justify-content:space-between}
@@ -757,7 +757,7 @@ footer a:hover { color: var(--text); }
 
     <div class="game-preview">
       <div class="gp-topbar">
-        <span class="gp-meta">Round 1 · 4 players</span>
+        <div class="gp-meta-left"><span class="gp-round" id="gp-round">Round <span id="gp-round-num">1</span></span><span class="gp-players"> · 4 players</span></div>
         <div class="gp-timer" id="gp-timer">60</div>
       </div>
       <div class="gp-letter-row">
@@ -1261,6 +1261,7 @@ function toggleFaq(el) {
   const timerEl = document.getElementById('gp-timer');
   let catIdx   = 0;
   let timerVal = 60;
+  let roundNum  = 1;
 
   // Countdown timer — resets when a new letter lands
   setInterval(() => {
@@ -1292,6 +1293,13 @@ function toggleFaq(el) {
   function spin() {
     const totalFrames = 22 + Math.floor(Math.random() * 8);
     let frame = 0;
+    // Advance round counter
+    roundNum = roundNum >= 8 ? 1 : roundNum + 1;
+    const rnEl = document.getElementById('gp-round-num');
+    if (rnEl) {
+      rnEl.style.opacity = '0'; rnEl.style.transform = 'translateY(-6px)';
+      setTimeout(() => { rnEl.textContent = roundNum; rnEl.style.opacity = '1'; rnEl.style.transform = ''; }, 220);
+    }
     // Advance categories and show them immediately — letter still unknown
     catIdx = (catIdx + 1) % CATEGORY_SETS.length;
     showCategories(CATEGORY_SETS[catIdx]);
