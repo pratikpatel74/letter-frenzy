@@ -384,7 +384,7 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
       <div class="gap"></div>
       <label class="mb8">Letter Difficulty</label>
       <div class="pill-row" id="diff-pills"></div>
-      <div class="text-dim fs-sm mt8" id="diff-hint">Excludes J, Q, X, Z from the pool.</div>
+      <div class="text-dim fs-sm mt8" id="diff-hint">Excludes J, Q, U, V, X, Z from the pool (20 letters).</div>
     </div>
     <div class="card">
       <div class="row mb8">
@@ -883,9 +883,9 @@ function stepPlayers(delta) {
 
 function updateDiffHint() {
   const hints = {
-    easy: 'Common letters only — great for all ages (15 letters).',
-    standard: 'Excludes J, Q, X, Z from the pool (22 letters).',
-    hard: 'All 26 letters including Q, X, Z.'
+    easy: 'Common letters only — great for all ages (19 letters).',
+    standard: 'Excludes J, Q, U, V, X, Z from the pool (20 letters).',
+    hard: 'All 26 letters including J, Q, U, V, X, Z.'
   };
   const el = document.getElementById('diff-hint');
   if (el) el.textContent = hints[S.setupDifficulty] || '';
