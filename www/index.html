@@ -1131,11 +1131,11 @@ function toggleFaq(el) {
 // ── Floating letters ─────────────────────────────────────
 (function() {
   const FL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-  const COLS = ['#FF5F6D','#FFC371','#38EF7D','#A29BFE','#FFE234','#11998E'];
+  const COLS = ['#FF5F6D','#FFC371','#FFE234','#38EF7D','#11998E','#A29BFE','#FF8B94','#74B9FF'];
   const wrap = document.createElement('div');
   wrap.style.cssText = 'position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;';
   document.body.appendChild(wrap);
-  for (let i = 0; i < 26; i++) {
+  for (let i = 0; i < 38; i++) {
     const el = document.createElement('span');
     const color = COLS[Math.floor(Math.random() * COLS.length)];
     const size  = 13 + Math.random() * 16;
@@ -1144,7 +1144,7 @@ function toggleFaq(el) {
     const dur   = 16 + Math.random() * 20;
     const delay = -(Math.random() * dur);
     el.textContent = FL[Math.floor(Math.random() * FL.length)];
-    el.style.cssText = `position:absolute;left:${x}%;top:${y}%;font-family:'Fredoka One',cursive;font-size:${size}px;color:${color};opacity:${(0.07 + Math.random() * 0.11).toFixed(2)};animation:floatLetter ${dur}s ${delay}s ease-in-out infinite;user-select:none;`;
+    el.style.cssText = `position:absolute;left:${x}%;top:${y}%;font-family:'Fredoka One',cursive;font-size:${size}px;color:${color};opacity:${(0.10 + Math.random() * 0.20).toFixed(2)};animation:floatLetter ${dur}s ${delay}s ease-in-out infinite;user-select:none;`;
     wrap.appendChild(el);
   }
 })();
