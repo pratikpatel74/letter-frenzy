@@ -25,6 +25,7 @@
 <meta name="twitter:image"       content="https://letterfrenzy.co.uk/og-image.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -1935,7 +1936,6 @@ function renderFinal() {
   const medals = ['🥇','🥈','🥉'];
   const heights = [120, 90, 70];
   const classes = ['p1','p2','p3'];
-  const order = sorted.length >= 3 ? [sorted[1], sorted[0], sorted[2]] : sorted;
 
   if (sorted.length >= 2) {
     const podiumData = sorted.length === 1 ? [null, sorted[0], null]
@@ -2340,7 +2340,6 @@ function renderLeaderboard() {
     }).join('');
 }
 
-let _toastTimer;
 function toast(msg, duration = 2500, isError = false) {
   const el = document.getElementById('toast');
   const d = document.createElement('div');
