@@ -731,8 +731,8 @@ footer a:hover { color: var(--text); }
         <div class="gp-timer" id="gp-timer">60</div>
       </div>
       <div class="gp-letter-row">
-        <div class="letter-tile" id="tile">S</div>
         <div class="gp-letter-lbl">All answers<br><strong>must start with…</strong></div>
+        <div class="letter-tile" id="tile">S</div>
       </div>
       <div class="gp-fields" id="gp-fields">
         <div class="gp-field"><span class="gp-cat">Country</span><span class="gp-val">Sweden…</span></div>
@@ -1204,7 +1204,7 @@ function toggleFaq(el) {
         setTimeout(() => {
           const cat = cats[Math.min(i, cats.length - 1)];
           catEls[i].textContent = cat;
-          valEls[i].textContent = (answers[cat] || letter + '…') + '…';
+          valEls[i].textContent = answers[cat] || '';
           f.classList.add('lit');
         }, i * 80);
       });
