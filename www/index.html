@@ -356,21 +356,22 @@ section { position: relative; z-index: 1; }
 
 /* ── FEATURES ── */
 .features {
-  padding: 0 20px 88px;
+  padding: 0 20px 72px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 36px;
+  gap: 32px;
 }
 
 .feature-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 11px;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
   width: 100%;
   max-width: 780px;
 }
 
+/* legacy chips kept for any other uses */
 .fchip {
   background: var(--card);
   border: 1.5px solid rgba(255,255,255,0.07);
@@ -383,9 +384,38 @@ section { position: relative; z-index: 1; }
   font-weight: 700;
   transition: border-color .18s;
 }
-
 .fchip:hover { border-color: rgba(255,255,255,0.18); }
 .fchip .fi { font-size: 1.25rem; flex-shrink: 0; }
+
+/* feature cards */
+.feat-card {
+  background: var(--card);
+  border: 1.5px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 18px 16px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .18s, transform .18s;
+}
+.feat-card:hover { border-color: rgba(255,255,255,0.16); transform: translateY(-2px); }
+.feat-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  border-radius: 14px 14px 0 0;
+}
+.feat-card.c-coral::before  { background: var(--coral); }
+.feat-card.c-mint::before   { background: var(--mint); }
+.feat-card.c-teal::before   { background: var(--teal); }
+.feat-card.c-yellow::before { background: var(--yellow); }
+.feat-card.c-purple::before { background: var(--purple); }
+.feat-card.c-free::before   { background: linear-gradient(90deg, var(--coral), var(--purple)); }
+.feat-card .fc-icon { font-size: 1.6rem; margin-bottom: 8px; }
+.feat-card .fc-name { font-size: .88rem; font-weight: 800; }
+.feat-card .fc-desc { font-size: .76rem; color: var(--text-dim); margin-top: 3px; line-height: 1.45; }
+.feat-card.wide { grid-column: span 2; display: flex; align-items: center; gap: 18px; }
+.feat-card.wide .fc-icon { font-size: 2rem; margin-bottom: 0; flex-shrink: 0; }
+.feat-card.wide .fc-name  { font-size: .96rem; }
+.feat-card.wide .fc-desc  { font-size: .8rem; }
 
 /* ── BOTTOM CTA ── */
 .bottom-cta {
@@ -764,7 +794,57 @@ footer a:hover { color: var(--text); }
 
   <div class="divider"></div>
 
-  <!-- FAQ -->
+  <!-- FEATURES -->
+  <section class="features">
+    <div class="section-head">
+      <div class="eyebrow">Built for everyone</div>
+      <h2 class="section-title">Everything you need, nothing you don't</h2>
+    </div>
+
+    <div class="feature-grid inner">
+      <div class="feat-card c-free wide">
+        <div class="fc-icon">🆓</div>
+        <div>
+          <div class="fc-name">Totally free — no strings attached</div>
+          <div class="fc-desc">No ads, no account, no downloads. Open a browser on any device and you're playing in seconds.</div>
+        </div>
+      </div>
+      <div class="feat-card c-coral">
+        <div class="fc-icon">👥</div>
+        <div class="fc-name">Up to 8 players</div>
+        <div class="fc-desc">Friends nearby or on a video call, all on their own device</div>
+      </div>
+      <div class="feat-card c-mint">
+        <div class="fc-icon">✏️</div>
+        <div class="fc-name">Custom categories</div>
+        <div class="fc-desc">Edit or add your own categories before every game</div>
+      </div>
+      <div class="feat-card c-teal">
+        <div class="fc-icon">🔍</div>
+        <div class="fc-name">Answer hints</div>
+        <div class="fc-desc">Smart hints for Country, Animal, Fruit, Colour &amp; Sport during review</div>
+      </div>
+      <div class="feat-card c-yellow">
+        <div class="fc-icon">🗳️</div>
+        <div class="fc-name">Challenge votes</div>
+        <div class="fc-desc">Group votes settle disputes — host has the final say</div>
+      </div>
+      <div class="feat-card c-purple">
+        <div class="fc-icon">🎵</div>
+        <div class="fc-name">Sound &amp; music</div>
+        <div class="fc-desc">Countdown ticks, round fanfares — toggle any time</div>
+      </div>
+      <div class="feat-card c-coral">
+        <div class="fc-icon">📱</div>
+        <div class="fc-name">Any device</div>
+        <div class="fc-desc">Phone, tablet, laptop — no app install needed</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+    <!-- FAQ -->
   <section class="faq">
     <div class="section-head">
       <div class="eyebrow">FAQ</div>
@@ -808,26 +888,6 @@ footer a:hover { color: var(--text); }
         <div class="faq-q" onclick="toggleFaq(this)">What are the answer hints shown during review? <span class="faq-chevron">▼</span></div>
         <div class="faq-a">For five popular categories — <strong style="color:var(--text)">Country, Animal, Fruit, Colour,</strong> and <strong style="color:var(--text)">Sport</strong> — the review screen shows a small hint next to each answer: <strong style="color:var(--mint)">✓ Recognised</strong> means the answer is in our curated list; <strong style="color:var(--yellow)">⚠️ Not recognised</strong> means it isn't. These are guides only — players can still challenge anything, and the group vote plus host override always have the final say.</div>
       </div>
-    </div>
-  </section>
-
-  <div class="divider"></div>
-
-  <!-- FEATURES -->
-  <section class="features">
-    <div class="section-head">
-      <div class="eyebrow">Built for everyone</div>
-      <h2 class="section-title">Everything you need, nothing you don't</h2>
-    </div>
-
-    <div class="feature-grid inner">
-      <div class="fchip"><span class="fi">👥</span>Up to 8 players</div>
-      <div class="fchip"><span class="fi">📱</span>Any device</div>
-      <div class="fchip"><span class="fi">✏️</span>Custom categories</div>
-      <div class="fchip"><span class="fi">🎵</span>Sound &amp; music</div>
-      <div class="fchip"><span class="fi">🗳️</span>Challenge votes</div>
-      <div class="fchip"><span class="fi">🆓</span>Totally free</div>
-      <div class="fchip"><span class="fi">🔍</span>Answer hints</div>
     </div>
   </section>
 
