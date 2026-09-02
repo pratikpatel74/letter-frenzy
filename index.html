@@ -1363,6 +1363,13 @@ async function startGame() {
   loading(false);
 }
 
+const COUNTRY_NAMES = new Set(["Afghanistan", "Albania", "Algeria", "America", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Britain", "Brunei", "Bulgaria", "Burkina Faso", "Burma", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo", "Congo-Brazzaville", "Congo-Kinshasa", "Costa Rica", "Cote d'Ivoire", "Croatia", "Cuba", "Cyprus", "Czech Republic", "Czechia", "DRC", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "East Timor", "Ecuador", "Egypt", "El Salvador", "England", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Great Britain", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Holland", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Ivory Coast", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Korea", "Kosovo", "Kuwait", "Kyrgyzstan", "Lao", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Macedonia", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Persia", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Scotland", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovak Republic", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Swaziland", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkiye", "Turkmenistan", "Tuvalu", "UAE", "UK", "USA", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "United States of America", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican", "Venezuela", "Viet Nam", "Vietnam", "Wales", "Yemen", "Zambia", "Zimbabwe"].map(c => c.toUpperCase()));
+
+function isKnownCountry(text) {
+  if (!text) return true; // blank handled elsewhere
+  return COUNTRY_NAMES.has(text.trim().toUpperCase());
+}
+
 const LETTER_POOLS = {
   easy:     ['A','B','C','D','E','F','G','H','I','K','L','M','N','O','P','R','S','T','W'],
   standard: ['A','B','C','D','E','F','G','H','I','K','L','M','N','O','P','R','S','T','W','Y'],
@@ -1911,6 +1918,9 @@ function renderReview() {
         </div>`;
       }
 
+      const countryWarn = (cat.toLowerCase() === 'country' && text && !isWrong && score > 0 && !isKnownCountry(text))
+        ? `<div style="font-size:.7rem;color:var(--yellow);padding:2px 0 4px 42px">⚠️ Not a recognised country</div>`
+        : '';
       return `<div class="${cardCls}" id="ac-${ans.id}" style="flex-direction:column;align-items:stretch;gap:0">
         <div style="display:flex;align-items:center;gap:10px">
           <div class="av-sm" style="background:${player?.avatar_color||'#888'}">${player?.avatar_emoji||'?'}</div>
@@ -1918,6 +1928,7 @@ function renderReview() {
           <div class="ans-score ${scoreClass}">${score}pt</div>
           ${rightEl}
         </div>
+        ${countryWarn}
         ${votePanel}
       </div>`;
     }).join('') || '<div class="text-dim fs-sm">No answers</div>';
