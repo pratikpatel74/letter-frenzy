@@ -1196,24 +1196,30 @@ function toggleFaq(el) {
     }
   }, 1000);
 
-  function lightFields(cats, letter) {
-    const answers = LETTER_ANSWERS[letter] || {};
+  // Show category labels unlit (no answers) — fires as soon as spin begins
+  function showCategories(cats) {
     fields.forEach(f => f.classList.remove('lit'));
-    setTimeout(() => {
-      fields.forEach((f, i) => {
-        setTimeout(() => {
-          const cat = cats[Math.min(i, cats.length - 1)];
-          catEls[i].textContent = cat;
-          valEls[i].textContent = answers[cat] || '';
-          f.classList.add('lit');
-        }, i * 80);
-      });
-    }, 270);
+    catEls.forEach((el, i) => { el.textContent = cats[Math.min(i, cats.length - 1)]; });
+    valEls.forEach(el => { el.textContent = ''; });
+  }
+
+  // Staggered answer reveal + light-up — fires once letter has landed
+  function revealAnswers(letter) {
+    const answers = LETTER_ANSWERS[letter] || {};
+    fields.forEach((f, i) => {
+      setTimeout(() => {
+        valEls[i].textContent = answers[catEls[i].textContent] || '';
+        f.classList.add('lit');
+      }, i * 80);
+    });
   }
 
   function spin() {
     const totalFrames = 22 + Math.floor(Math.random() * 8);
     let frame = 0;
+    // Advance categories and show them immediately — letter still unknown
+    catIdx = (catIdx + 1) % CATEGORY_SETS.length;
+    showCategories(CATEGORY_SETS[catIdx]);
     function step() {
       tile.textContent = LETTERS[Math.floor(Math.random() * LETTERS.length)];
       frame++;
@@ -1225,10 +1231,10 @@ function toggleFaq(el) {
         tile.textContent = finalLetter;
         tile.style.transform = 'scale(1.09)';
         setTimeout(() => { tile.style.transform = ''; }, 260);
-        catIdx   = (catIdx + 1) % CATEGORY_SETS.length;
         timerVal = 45 + Math.floor(Math.random() * 16);
         if (timerEl) { timerEl.textContent = timerVal; timerEl.classList.remove('low'); }
-        lightFields(CATEGORY_SETS[catIdx], finalLetter);
+        // Small pause so the landed letter registers before answers fill in
+        setTimeout(() => revealAnswers(finalLetter), 200);
       }
     }
     step();
@@ -1236,6 +1242,8 @@ function toggleFaq(el) {
 
   setTimeout(spin, 1400);
   setInterval(spin, 7000);
-  setTimeout(() => lightFields(CATEGORY_SETS[0], 'S'), 300);
+  // Initial state: categories appear first, answers follow after a beat
+  showCategories(CATEGORY_SETS[0]);
+  setTimeout(() => revealAnswers('S'), 600);
 })();
 </script>
