@@ -313,7 +313,7 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
 #mute-btn { position: fixed; top: max(14px, env(safe-area-inset-top)); right: 16px; z-index: 50; background: rgba(255,255,255,.1); border: 1.5px solid rgba(255,255,255,.15); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; transition: background .15s; backdrop-filter: blur(6px); line-height: 1; }
 #mute-btn:hover { background: rgba(255,255,255,.2); }
 /* On playing screen the timer ring is 96px at top-right — push mute btn below it on mobile */
-@media (max-width: 480px) { body[data-screen="playing"] #mute-btn { top: calc(max(14px, env(safe-area-inset-top)) + 100px); } }
+@media (max-width: 480px) { body[data-screen="playing"] #mute-btn { top: auto; bottom: 84px; left: 50%; right: auto; transform: translateX(-50%); } }
 
 /* ── Round leaderboard ── */
 .round-lb-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.07); }
