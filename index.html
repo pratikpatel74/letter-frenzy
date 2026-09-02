@@ -381,6 +381,10 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
         <div class="toggle-opt" id="mode-pick" onclick="setLetterMode('pick')">🗳️ Players Pick</div>
       </div>
       <div class="text-dim fs-sm mt8" id="mode-hint">A random unused letter is drawn each round.</div>
+      <div class="gap"></div>
+      <label class="mb8">Letter Difficulty</label>
+      <div class="pill-row" id="diff-pills"></div>
+      <div class="text-dim fs-sm mt8" id="diff-hint">Excludes J, Q, X, Z from the pool.</div>
     </div>
     <div class="card">
       <div class="row mb8">
@@ -694,7 +698,7 @@ let S = {
   playerId: null, roomId: null, roomCode: null, isHost: false,
   room: null, players: [], answers: [],
   selectedEmoji: EMOJIS[0], selectedColor: COLORS[0],
-  setupRounds: 3, setupTimer: 60, setupPlayers: 4, setupMode: 'random',
+  setupRounds: 3, setupTimer: 60, setupPlayers: 4, setupMode: 'random', setupDifficulty: 'standard',
   setupCats: [...DEF_CATS],
   myAnswerDraft: {}, // { cat: text } live draft before submit
   timerInterval: null, timerTimeout: null,
@@ -855,6 +859,10 @@ function buildSetupUI() {
   tp.innerHTML = [[30,'30s'],[60,'60s'],[90,'90s'],[120,'2m']].map(([v,l],i) =>
     `<div class="pill${i===1?' on':''}" onclick="setPill(this,'timer-p',${v})">${l}</div>`).join('');
 
+  const dp = document.getElementById('diff-pills');
+  dp.innerHTML = [{v:'easy',l:'🟢 Easy'},{v:'standard',l:'⚡ Standard'},{v:'hard',l:'🔥 Hard'}]
+    .map(({v,l}) => `<div class="pill${v==='standard'?' on':''}" onclick="setPill(this,'diff','${v}')">${l}</div>`).join('');
+
   renderCatList();
   initCatSetup();
 }
@@ -864,11 +872,22 @@ function setPill(el, group, val) {
   el.classList.add('on');
   if (group === 'rounds') S.setupRounds = val;
   if (group === 'timer-p') S.setupTimer = val;
+  if (group === 'diff') { S.setupDifficulty = val; updateDiffHint(); }
 }
 
 function stepPlayers(delta) {
   S.setupPlayers = Math.max(2, Math.min(8, S.setupPlayers + delta));
   document.getElementById('players-val').textContent = S.setupPlayers;
+}
+
+function updateDiffHint() {
+  const hints = {
+    easy: 'Common letters only — great for all ages (15 letters).',
+    standard: 'Excludes J, Q, X, Z from the pool (22 letters).',
+    hard: 'All 26 letters including Q, X, Z.'
+  };
+  const el = document.getElementById('diff-hint');
+  if (el) el.textContent = hints[S.setupDifficulty] || '';
 }
 
 function setLetterMode(mode) {
@@ -1058,6 +1077,7 @@ async function createRoom() {
       round_time_seconds: S.setupTimer,
       max_players: S.setupPlayers,
       letter_mode: S.setupMode,
+      letter_difficulty: S.setupDifficulty,
       categories: S.setupCats,
     }).select().single();
     if (re) throw re;
@@ -1330,7 +1350,8 @@ async function startGame() {
         status: 'picking', current_round: 1
       }).eq('id', S.roomId);
     } else {
-      const letter = drawRandomLetter(room.used_letters || []);
+      const pool = LETTER_POOLS[room.letter_difficulty || 'standard'];
+      const letter = drawRandomLetter(room.used_letters || [], pool);
       await db.from('letter_frenzy_rooms').update({
         status: 'revealing', current_round: 1,
         current_letter: letter,
@@ -1341,8 +1362,14 @@ async function startGame() {
   loading(false);
 }
 
-function drawRandomLetter(usedLetters) {
-  const all = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const LETTER_POOLS = {
+  easy:     ['A','B','C','D','E','F','G','H','I','K','L','M','N','O','P','R','S','T','W'],
+  standard: ['A','B','C','D','E','F','G','H','I','K','L','M','N','O','P','R','S','T','W','Y'],
+  hard:     'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+};
+
+function drawRandomLetter(usedLetters, pool) {
+  const all = pool || LETTER_POOLS.standard;
   const avail = all.filter(l => !usedLetters.includes(l));
   if (!avail.length) return all[Math.floor(Math.random() * all.length)]; // Fallback if all used
   return avail[Math.floor(Math.random() * avail.length)];
@@ -1363,8 +1390,9 @@ function showPickScreen() {
 
 function buildAlphaGrid() {
   const used = S.room.used_letters || [];
+  const pool = LETTER_POOLS[S.room.letter_difficulty || 'standard'];
   const grid = document.getElementById('pick-grid');
-  grid.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l => {
+  grid.innerHTML = pool.map(l => {
     const isUsed = used.includes(l);
     const isChosen = l === S.myPick;
     const isTaken = S.players.some(p => p.letter_pick === l && p.id !== S.playerId);
@@ -2029,7 +2057,8 @@ async function advanceGame() {
         await db.from('letter_frenzy_players').update({ letter_pick: null }).eq('room_id', S.roomId);
         await db.from('letter_frenzy_rooms').update({ status: 'picking', current_round: nextRound }).eq('id', S.roomId);
       } else {
-        const letter = drawRandomLetter(room.used_letters || []);
+        const pool = LETTER_POOLS[room.letter_difficulty || 'standard'];
+        const letter = drawRandomLetter(room.used_letters || [], pool);
         await db.from('letter_frenzy_rooms').update({
           status: 'revealing', current_round: nextRound,
           current_letter: letter,
