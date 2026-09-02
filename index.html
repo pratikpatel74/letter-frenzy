@@ -1164,7 +1164,13 @@ async function subscribeRoom(roomId) {
       await refreshAnswers();
       onAnswersChange();
     })
-    .subscribe();
+    .subscribe(async (status) => {
+      if (status === 'SUBSCRIBED' && S.roomId) {
+        // Re-sync room state in case we missed events during connection setup
+        const { data: room } = await db.from('letter_frenzy_rooms').select('*').eq('id', S.roomId).single();
+        if (room) { S.room = room; onRoomChange(room); }
+      }
+    });
 }
 
 async function refreshPlayers() {
@@ -1572,6 +1578,14 @@ async function submitAnswers() {
   document.getElementById('submit-btn').textContent = '✅ Submitted';
   document.querySelectorAll('#answer-fields input').forEach(i => i.readOnly = true);
   toast('Answers submitted!');
+  // Safety net: if Realtime missed the 'review' event, poll for it
+  const _syncCheck = async () => {
+    if (S.currentScreen !== 'playing') return;
+    const { data: room } = await db.from('letter_frenzy_rooms').select('*').eq('id', S.roomId).single();
+    if (room && room.status !== 'playing') { S.room = room; onRoomChange(room); }
+    else if (S.currentScreen === 'playing') setTimeout(_syncCheck, 3000);
+  };
+  setTimeout(_syncCheck, 5000);
 }
 
 function renderSubmitStatus() {
@@ -1581,9 +1595,15 @@ function renderSubmitStatus() {
 }
 
 function countSubmitted() {
-  const submittedPlayers = new Set();
-  S.answers.filter(a => a.submitted).forEach(a => submittedPlayers.add(a.player_id));
-  return submittedPlayers.size;
+  // A player counts only when ALL categories are submitted — prevents
+  // premature scoring while Promise.all upserts are still in-flight.
+  const cats = getCats();
+  const byPlayer = {};
+  S.answers.filter(a => a.submitted).forEach(a => {
+    if (!byPlayer[a.player_id]) byPlayer[a.player_id] = new Set();
+    byPlayer[a.player_id].add(a.category);
+  });
+  return Object.values(byPlayer).filter(catSet => catSet.size >= cats.length).length;
 }
 
 function checkAllSubmitted() {
