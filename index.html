@@ -319,7 +319,6 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
 .round-lb-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.07); }
 .round-lb-row:last-child { border-bottom: none; }
 .round-lb-row.me { background: rgba(255,255,255,.05); margin: 0 -20px; padding: 7px 20px; border-bottom: none; }
-.btn-icon{display:inline-block;width:1.1em;height:1.1em;vertical-align:-0.15em;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -327,7 +326,7 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
 <canvas id="stars"></canvas>
 <div id="loading" hidden><div class="spinner"></div><div class="text-dim">Loading…</div></div>
 <div id="toast"></div>
-<button id="mute-btn" title="Toggle sound" onclick="toggleMute()"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></button>
+<button id="mute-btn" title="Toggle sound" onclick="toggleMute()">🔊</button>
 
 <div id="app">
 
@@ -339,9 +338,9 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
       <div class="logo-sub" style="margin-top:10px;font-size:0.95rem;letter-spacing:3px">Multiplayer Word Game</div>
     </div>
     <div style="width:100%;display:flex;flex-direction:column;gap:14px">
-      <button class="btn btn-coral" style="padding:20px;font-size:1.15rem" onclick="goSetup()"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 8V6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2"/><path d="M12.5 8V6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2"/><rect x="2" y="8" width="20" height="11" rx="3.5"/><line x1="6.5" y1="13.5" x2="10.5" y2="13.5"/><line x1="8.5" y1="11.5" x2="8.5" y2="15.5"/><circle cx="15.5" cy="12.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="17.5" cy="14.5" r="1.1" fill="currentColor" stroke="none"/></svg> Create Game</button>
-      <button class="btn btn-teal" style="padding:20px;font-size:1.15rem" onclick="goJoin()"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg> Join Game</button>
-      <button class="btn btn-ghost" style="padding:14px;font-size:1rem" onclick="showScreen('howtoplay')"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/><line x1="5" y1="9" x2="9" y2="9"/><line x1="5" y1="12" x2="9" y2="12"/><line x1="15" y1="9" x2="19" y2="9"/><line x1="15" y1="12" x2="19" y2="12"/></svg> How to Play</button>
+      <button class="btn btn-coral" style="padding:20px;font-size:1.15rem" onclick="goSetup()">🎮 Create Game</button>
+      <button class="btn btn-teal" style="padding:20px;font-size:1.15rem" onclick="goJoin()">🚀 Join Game</button>
+      <button class="btn btn-ghost" style="padding:14px;font-size:1rem" onclick="showScreen('howtoplay')">📖 How to Play</button>
     </div>
     <div class="text-dim text-center" style="font-size:0.95rem;max-width:280px;line-height:1.5">Race to fill categories with words starting with the same letter!</div>
   </div>
@@ -378,8 +377,8 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
       <div class="gap"></div>
       <label class="mb8">Letter Selection</label>
       <div class="toggle-row">
-        <div class="toggle-opt on" id="mode-random" onclick="setLetterMode('random')"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="3.5"/><circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none"/><circle cx="16" cy="8" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="8" cy="16" r="1.3" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.3" fill="currentColor" stroke="none"/></svg> Random</div>
-        <div class="toggle-opt" id="mode-pick" onclick="setLetterMode('pick')"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="18" height="11" rx="2"/><path d="M8.5 10V7a3.5 3.5 0 0 1 7 0v3"/><polyline points="8,15 11,18 16,13"/></svg> Players Pick</div>
+        <div class="toggle-opt on" id="mode-random" onclick="setLetterMode('random')">🎲 Random</div>
+        <div class="toggle-opt" id="mode-pick" onclick="setLetterMode('pick')">🗳️ Players Pick</div>
       </div>
       <div class="text-dim fs-sm mt8" id="mode-hint">A random unused letter is drawn each round.</div>
     </div>
@@ -411,7 +410,7 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
     <!-- Game-in-progress blocker (shown instead of the form) -->
     <div id="join-in-progress" hidden style="display:flex;flex-direction:column;gap:14px">
       <div class="card text-center" style="border:2px solid var(--coral);padding:30px 20px">
-        <div style="margin-bottom:12px"><svg style="display:block;width:3rem;height:3rem;margin:0 auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2.5"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16.5" r="1.2" fill="currentColor" stroke="none"/></svg></div>
+        <div style="font-size:3rem;margin-bottom:12px">🔒</div>
         <div class="fw800" style="font-size:1.2rem;margin-bottom:8px">Game in Progress</div>
         <div class="text-dim" style="line-height:1.5">Room <span id="inprogress-code" class="mono text-yellow"></span> has already started. You can't join mid-game.</div>
       </div>
@@ -447,7 +446,7 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
   <div class="inner" style="gap:14px;max-width:420px">
 
     <div class="card" style="border-left:4px solid var(--coral)">
-      <div style="font-size:1.5rem;margin-bottom:6px"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="22" y1="2" x2="15.5" y2="8.5"/><polyline points="16,2 22,2 22,8"/></svg> The Goal</div>
+      <div style="font-size:1.5rem;margin-bottom:6px">🎯 The Goal</div>
       <div class="text-dim" style="line-height:1.6">Fill every category with a word starting with the round's letter — faster and more uniquely than your opponents.</div>
     </div>
 
@@ -489,11 +488,11 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
 
     <div class="card" style="border-left:4px solid var(--purple)">
       <div style="font-size:1.3rem;margin-bottom:6px">⚠️ Challenges &amp; Voting</div>
-      <div class="text-dim" style="line-height:1.6">Spot a dodgy answer? Tap <strong style="color:var(--coral)">Flag</strong> on the review screen. Everyone (except the answer's owner) gets 30 seconds to vote <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg> valid or <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg> invalid. Majority wins — the host breaks ties and can override any vote at any time.</div>
+      <div class="text-dim" style="line-height:1.6">Spot a dodgy answer? Tap <strong style="color:var(--coral)">Flag</strong> on the review screen. Everyone (except the answer's owner) gets 30 seconds to vote 👍 valid or 👎 invalid. Majority wins — the host breaks ties and can override any vote at any time.</div>
     </div>
 
     <div class="card" style="border-left:4px solid var(--mint)">
-      <div style="font-size:1.3rem;margin-bottom:6px"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14z"/></svg> Tips</div>
+      <div style="font-size:1.3rem;margin-bottom:6px">💡 Tips</div>
       <div class="text-dim" style="line-height:1.6;display:flex;flex-direction:column;gap:6px">
         <div>• Hit <strong style="color:#fff">Submit</strong> early to lock in your answers — you'll see how many others have submitted.</div>
         <div>• Obscure-but-valid answers score the same as common ones, as long as nobody else wrote the same thing.</div>
@@ -501,7 +500,7 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
       </div>
     </div>
 
-    <button class="btn btn-coral" style="max-width:420px;margin-top:4px" onclick="showScreen('home')">Got it — Let's Play! <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 8V6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2"/><path d="M12.5 8V6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2"/><rect x="2" y="8" width="20" height="11" rx="3.5"/><line x1="6.5" y1="13.5" x2="10.5" y2="13.5"/><line x1="8.5" y1="11.5" x2="8.5" y2="15.5"/><circle cx="15.5" cy="12.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="17.5" cy="14.5" r="1.1" fill="currentColor" stroke="none"/></svg></button>
+    <button class="btn btn-coral" style="max-width:420px;margin-top:4px" onclick="showScreen('home')">Got it — Let's Play! 🎮</button>
     <div style="height:20px"></div>
   </div>
 </div>
@@ -513,8 +512,8 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
       <div class="text-dim fs-sm fw700 mb4">ROOM CODE</div>
       <div class="room-code" id="lobby-code" onclick="copyCode()" style="cursor:pointer" title="Tap to copy">XXXX</div>
       <div style="display:flex;gap:10px;justify-content:center;margin-top:12px">
-        <button class="btn btn-ghost btn-sm" onclick="copyCode()"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy Code</button>
-        <button class="btn btn-ghost btn-sm" onclick="shareLink()"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Share Link</button>
+        <button class="btn btn-ghost btn-sm" onclick="copyCode()">📋 Copy Code</button>
+        <button class="btn btn-ghost btn-sm" onclick="shareLink()">🔗 Share Link</button>
       </div>
     </div>
     <div class="card mb8">
@@ -536,7 +535,7 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
     </div>
     <div id="lobby-waiting" hidden>
       <div class="card text-center">
-        <div class="mb8"><svg style="display:block;width:2rem;height:2rem;margin:0 auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16.5 14.5"/></svg></div>
+        <div class="mb8">🕐</div>
         <div class="fw700">Waiting for host to start…</div>
         <button class="btn btn-danger" style="margin-top:14px" onclick="leaveGame()">← Leave Game</button>
       </div>
@@ -561,7 +560,7 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
       <div class="fw700">Waiting for all players to pick…</div>
     </div>
     <div id="pick-host-draw" hidden>
-      <button class="btn btn-coral" onclick="hostDrawLetter()"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="3.5"/><circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none"/><circle cx="16" cy="8" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="8" cy="16" r="1.3" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.3" fill="currentColor" stroke="none"/></svg> Draw Letter from Picks</button>
+      <button class="btn btn-coral" onclick="hostDrawLetter()">🎲 Draw Letter from Picks</button>
     </div>
   </div>
 </div>
@@ -630,16 +629,16 @@ label { font-size: .85rem; font-weight: 700; color: var(--dim); text-transform: 
 <div class="screen" id="screen-final" hidden>
   <div class="inner text-center">
     <div style="padding-top:20px" class="mb20">
-      <div class="logo" style="font-size:2rem"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M7 4h10v7a5 5 0 0 1-5 5 5 5 0 0 1-5-5z"/><path d="M7 6H4a1 1 0 0 0-1 1v1.5A3.5 3.5 0 0 0 6.5 12"/><path d="M17 6h3a1 1 0 0 1 1 1v1.5A3.5 3.5 0 0 1 17.5 12"/></svg> Game Over!</div>
+      <div class="logo" style="font-size:2rem">🏆 Game Over!</div>
     </div>
     <div class="podium" id="final-podium"></div>
     <div class="card mb14" id="final-scores"></div>
-    <button class="btn btn-orange mb8" onclick="shareResults()"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Share Results</button>
+    <button class="btn btn-orange mb8" onclick="shareResults()">📤 Share Results</button>
     <div id="final-host-btn" hidden>
-      <button class="btn btn-coral mb8" onclick="rematch()"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Rematch</button>
+      <button class="btn btn-coral mb8" onclick="rematch()">🔄 Rematch</button>
     </div>
     <div id="final-wait" hidden class="card text-center mb8">
-      <div class="fw700 text-dim"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16.5 14.5"/></svg> Waiting for host…</div>
+      <div class="fw700 text-dim">🕐 Waiting for host…</div>
     </div>
     <button class="btn btn-ghost" onclick="playAgain()">Leave Game</button>
     <div style="height:20px"></div>
@@ -1850,19 +1849,19 @@ function renderReview() {
           voteContent = `<div class="text-dim fs-sm">Your answer is being voted on</div>`;
         } else if (myVote) {
           const voteColor = myVote === 'valid' ? 'var(--mint)' : 'var(--coral)';
-          voteContent = `<div class="fs-sm" style="color:${voteColor};font-weight:700">You voted: ${myVote === 'valid' ? '<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg> valid' : '<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg> invalid'}</div>`;
+          voteContent = `<div class="fs-sm" style="color:${voteColor};font-weight:700">You voted: ${myVote === 'valid' ? '👍 valid' : '👎 invalid'}</div>`;
         } else {
           voteContent = `<div class="vote-btns">
-            <button class="vote-btn valid" onclick="castVote('${ans.id}','valid')"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg> Valid</button>
-            <button class="vote-btn invalid" onclick="castVote('${ans.id}','invalid')"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg> Invalid</button>
+            <button class="vote-btn valid" onclick="castVote('${ans.id}','valid')">👍 Valid</button>
+            <button class="vote-btn invalid" onclick="castVote('${ans.id}','invalid')">👎 Invalid</button>
           </div>`;
         }
 
         // Show tally if I've voted, or I'm host, or timer expired
         const showTally = myVote || S.isHost || remaining <= 0;
         const tallyHtml = showTally ? `<div class="vote-tally">
-          <span class="text-mint"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg> ${validVotes}</span>
-          <span class="text-coral"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg> ${invalidVotes}</span>
+          <span class="text-mint">👍 ${validVotes}</span>
+          <span class="text-coral">👎 ${invalidVotes}</span>
           <span class="text-dim">(${totalVotes}/${eligibleCount} voted)</span>
         </div>` : '';
 
@@ -2384,7 +2383,7 @@ function stopBgMusic() {
 
 function toggleMute() {
   S.muted = !S.muted;
-  document.getElementById('mute-btn').innerHTML = S.muted ? '<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>' : '<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>';
+  document.getElementById('mute-btn').textContent = S.muted ? '🔇' : '🔊';
   if (!S.muted && _bgMusicType) {
     // Restart the scheduler loop
     if (_bgTimeout) { clearTimeout(_bgTimeout); _bgTimeout = null; }
@@ -2452,7 +2451,7 @@ function renderLeaderboard() {
 
   el.hidden = false;
   el.innerHTML =
-    `<div class="fw800 mb8" style="font-size:.82rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--orange)"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="9"/><line x1="12" y1="20" x2="12" y2="3"/><line x1="6" y1="20" x2="6" y2="13"/><line x1="2" y1="20" x2="22" y2="20"/></svg> Standings · Round ${S.room?.current_round || 1}</div>` +
+    `<div class="fw800 mb8" style="font-size:.82rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--orange)">📊 Standings · Round ${S.room?.current_round || 1}</div>` +
     sorted.map((p, i) => {
       const rs = roundScores[p.id] || 0;
       const roundWin = rs > 0 && rs === maxRS;
@@ -2461,7 +2460,7 @@ function renderLeaderboard() {
         <div style="font-family:'Space Mono',monospace;color:var(--dim);width:18px;font-size:.78rem;font-weight:700">${i + 1}</div>
         <div class="av-sm" style="background:${p.avatar_color}">${p.avatar_emoji}</div>
         <div style="flex:1;font-weight:700;font-size:.9rem">${esc(p.name)}${isMe ? ' <span style="color:var(--dim);font-weight:400;font-size:.75rem">(you)</span>' : ''}</div>
-        <div style="font-family:'Space Mono',monospace;font-size:.78rem;color:${roundWin ? 'var(--mint)' : 'rgba(255,255,255,.3)'}">+${rs}${roundWin ? ' <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2h8l-4 8z" fill="rgba(255,204,68,0.12)"/><circle cx="12" cy="17" r="5.5"/><text x="12" y="17" text-anchor="middle" dominant-baseline="central" font-size="8" font-weight="800" font-family="system-ui,sans-serif" fill="currentColor" stroke="none">1</text></svg>' : ''}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:.78rem;color:${roundWin ? 'var(--mint)' : 'rgba(255,255,255,.3)'}">+${rs}${roundWin ? ' 🏅' : ''}</div>
         <div style="font-family:'Space Mono',monospace;font-size:.88rem;color:var(--yellow);min-width:42px;text-align:right;font-weight:700">${p.total_score}pt</div>
       </div>`;
     }).join('');
