@@ -740,8 +740,8 @@ footer a:hover { color: var(--text); }
 .game-preview{background:var(--card);border-radius:22px;border:1.5px solid rgba(255,255,255,.11);padding:18px;width:100%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.04) inset;margin:36px 0 28px;display:flex;flex-direction:column;gap:13px}
 .gp-topbar{display:flex;justify-content:space-between;align-items:baseline}
 .gp-meta{font-size:.63rem;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;color:rgba(255,255,255,.28)}.gp-round{font-size:.63rem;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;color:rgba(255,255,255,.28)}.gp-round #gp-round-num{font-family:'Fredoka One',cursive;font-size:1.05rem;font-weight:400;color:var(--mint);letter-spacing:0;margin-left:5px;display:inline-block;transition:transform .2s,opacity .2s}.gp-players{font-size:.63rem;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;color:rgba(255,255,255,.28)}.gp-right{display:flex;align-items:baseline;gap:10px}
-.gp-timer{width:36px;height:36px;border-radius:50%;border:2.5px solid var(--coral);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:.68rem;font-weight:700;color:var(--coral);transition:border-color .4s,color .4s}
-.gp-timer.low{border-color:var(--orange);color:var(--orange)}
+.gp-timer{width:36px;height:36px;border-radius:50%;border:2.5px solid var(--mint);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:.68rem;font-weight:700;color:var(--mint);transition:border-color .4s,color .4s}
+.gp-timer.amber{border-color:var(--yellow);color:var(--yellow)}.gp-timer.urgent{border-color:var(--coral);color:var(--coral)}
 .gp-letter-row{display:flex;align-items:center;gap:16px;justify-content:space-between}
 .game-preview .letter-tile{width:74px !important;height:74px !important;font-size:3.1rem !important;border-radius:16px;flex-shrink:0;margin:0}
 .gp-letter-lbl{font-size:.75rem;font-weight:700;color:rgba(255,255,255,.32);line-height:1.5}
@@ -1305,7 +1305,9 @@ function toggleFaq(el) {
     timerVal = Math.max(0, timerVal - 1);
     if (timerEl) {
       timerEl.textContent = timerVal;
-      timerEl.classList.toggle('low', timerVal <= 10 && timerVal > 0);
+      timerEl.classList.remove('amber', 'urgent');
+      if (timerVal <= 10 && timerVal > 5) timerEl.classList.add('amber');
+      if (timerVal <= 5  && timerVal > 0) timerEl.classList.add('urgent');
       if (timerVal <= 5 && timerVal > 0) playTick(true);
     }
   }, 1000);
@@ -1355,7 +1357,7 @@ function toggleFaq(el) {
         tile.style.transform = 'scale(1.09)';
         setTimeout(() => { tile.style.transform = ''; }, 260);
         timerVal = 8 + Math.floor(Math.random() * 5);
-        if (timerEl) { timerEl.textContent = timerVal; timerEl.classList.remove('low'); }
+        if (timerEl) { timerEl.textContent = timerVal; timerEl.classList.remove('amber','urgent'); }
         // Small pause so the landed letter registers before answers fill in
         setTimeout(() => revealAnswers(finalLetter), 200);
       }
