@@ -770,7 +770,7 @@ footer a:hover { color: var(--text); }
     <div class="game-preview">
       <div class="gp-topbar">
         <span class="gp-round" id="gp-round">Round <span id="gp-round-num">1</span></span>
-        <div class="gp-right"><span class="gp-players">4 players</span><div class="gp-timer" id="gp-timer">60</div></div>
+        <div class="gp-right"><span class="gp-players">4 players</span><div class="gp-timer" id="gp-timer">–</div></div>
       </div>
       <div class="gp-letter-row">
         <div class="gp-letter-lbl">All answers<br><strong>must start with…</strong></div>
@@ -1369,15 +1369,15 @@ function toggleFaq(el) {
   function runCycle() {
     // 1. Flux — letter spinning, answers cleared inside doFlux → showCategories
     doFlux(letter => {
-      // 2. Land — answers populate after letter settles
-      setTimeout(() => revealAnswers(letter), 350);
-      // 3. Countdown from 10s (green → amber → red) — starts after letter lands
+      // 2. Land — timer resets first so player sees the green 10
       setTimeout(() => {
         startCountdown(10, () => {
           // 4. Zero — brief hold then loop
           setTimeout(runCycle, 1400);
         });
-      }, 700);
+      }, 500);
+      // 3. Answers fill in after a beat — letter has settled, timer is visible
+      setTimeout(() => revealAnswers(letter), 1400);
     });
   }
 
