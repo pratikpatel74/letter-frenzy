@@ -1296,30 +1296,17 @@ function toggleFaq(el) {
   const catEls  = fields.map(f => f.querySelector('.gp-cat'));
   const valEls  = fields.map(f => f.querySelector('.gp-val'));
   const timerEl = document.getElementById('gp-timer');
-  let catIdx   = 0;
-  let timerVal = 9;
-  let roundNum  = 1;
+  let catIdx = 0, roundNum = 1;
 
-  // Countdown timer — resets when a new letter lands
-  setInterval(() => {
-    timerVal = Math.max(0, timerVal - 1);
-    if (timerEl) {
-      timerEl.textContent = timerVal;
-      timerEl.classList.remove('amber', 'urgent');
-      if (timerVal <= 10 && timerVal > 5) timerEl.classList.add('amber');
-      if (timerVal <= 5  && timerVal > 0) timerEl.classList.add('urgent');
-      if (timerVal <= 5 && timerVal > 0) playTick(true);
-    }
-  }, 1000);
+  // ── Orchestrated sequence ─────────────────────────────────────────────────
+  // FLUX (~2.5s) → LAND → COUNTDOWN (10s) → ZERO → loop
 
-  // Show category labels unlit (no answers) — fires as soon as spin begins
   function showCategories(cats) {
     fields.forEach(f => f.classList.remove('lit'));
     catEls.forEach((el, i) => { el.textContent = cats[Math.min(i, cats.length - 1)]; });
     valEls.forEach(el => { el.textContent = ''; });
   }
 
-  // Staggered answer reveal + light-up — fires once letter has landed
   function revealAnswers(letter) {
     const answers = LETTER_ANSWERS[letter] || {};
     fields.forEach((f, i) => {
@@ -1327,49 +1314,76 @@ function toggleFaq(el) {
         valEls[i].textContent = answers[catEls[i].textContent] || '';
         f.classList.add('lit');
         playCatPop();
-      }, i * 80);
+      }, i * 110);
     });
   }
 
-  function spin() {
-    const totalFrames = 22 + Math.floor(Math.random() * 8);
-    let frame = 0;
+  function setTimerVal(val) {
+    if (!timerEl) return;
+    timerEl.textContent = val;
+    timerEl.classList.remove('amber', 'urgent');
+    if (val <= 10 && val > 5) timerEl.classList.add('amber');
+    if (val <= 5  && val > 0) timerEl.classList.add('urgent');
+  }
+
+  function startCountdown(from, onZero) {
+    let val = from;
+    setTimerVal(val);
+    const iv = setInterval(() => {
+      val--;
+      setTimerVal(val);
+      if (val <= 5 && val > 0) playTick(true);
+      if (val <= 0) { clearInterval(iv); onZero(); }
+    }, 1000);
+  }
+
+  function doFlux(onLanded) {
     playSpinWhoosh();
-    // Advance round counter
+    catIdx = (catIdx + 1) % CATEGORY_SETS.length;
+    showCategories(CATEGORY_SETS[catIdx]);
     roundNum = roundNum >= 8 ? 1 : roundNum + 1;
     const rnEl = document.getElementById('gp-round-num');
     if (rnEl) {
       rnEl.style.opacity = '0'; rnEl.style.transform = 'translateY(-6px)';
       setTimeout(() => { rnEl.textContent = roundNum; rnEl.style.opacity = '1'; rnEl.style.transform = ''; }, 220);
     }
-    // Advance categories and show them immediately — letter still unknown
-    catIdx = (catIdx + 1) % CATEGORY_SETS.length;
-    showCategories(CATEGORY_SETS[catIdx]);
+    const totalFrames = 20 + Math.floor(Math.random() * 6);
+    let frame = 0;
     function step() {
       tile.textContent = LETTERS[Math.floor(Math.random() * LETTERS.length)];
       frame++;
-      const remaining = totalFrames - frame;
-      if (remaining > 0) {
-        setTimeout(step, remaining > 5 ? 110 : 180 + (5 - remaining) * 70);
+      const rem = totalFrames - frame;
+      if (rem > 0) {
+        setTimeout(step, rem > 5 ? 100 : 160 + (5 - rem) * 80);
       } else {
-        const finalLetter = LETTERS[Math.floor(Math.random() * LETTERS.length)];
-        tile.textContent = finalLetter;
+        const letter = LETTERS[Math.floor(Math.random() * LETTERS.length)];
+        tile.textContent = letter;
         tile.style.transform = 'scale(1.09)';
         setTimeout(() => { tile.style.transform = ''; }, 260);
-        timerVal = 8 + Math.floor(Math.random() * 5);
-        if (timerEl) { timerEl.textContent = timerVal; timerEl.classList.remove('amber','urgent'); }
-        // Small pause so the landed letter registers before answers fill in
-        setTimeout(() => revealAnswers(finalLetter), 200);
+        onLanded(letter);
       }
     }
     step();
   }
 
-  setTimeout(spin, 1400);
-  setInterval(spin, 7000);
-  // Initial state: categories appear first, answers follow after a beat
+  function runCycle() {
+    // 1. Flux — letter spinning, answers cleared inside doFlux → showCategories
+    doFlux(letter => {
+      // 2. Land — answers populate after letter settles
+      setTimeout(() => revealAnswers(letter), 350);
+      // 3. Countdown from 10s (green → amber → red) — starts after letter lands
+      setTimeout(() => {
+        startCountdown(10, () => {
+          // 4. Zero — brief hold then loop
+          setTimeout(runCycle, 1400);
+        });
+      }, 700);
+    });
+  }
+
+  // Kick off: show first categories, then start the loop
   showCategories(CATEGORY_SETS[0]);
-  setTimeout(() => revealAnswers('S'), 600);
+  setTimeout(runCycle, 900);
 })();
 
 /* ── HERO ANIMATION SFX (Web Audio, no files) ── */
