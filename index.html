@@ -1822,7 +1822,13 @@ function areDuplicates(a, b) {
   const norm = s => s.trim().toLowerCase().replace(/[^a-z]/g, '');
   const na = norm(a), nb = norm(b);
   if (!na || !nb) return false;
-  return levenshtein(na, nb) <= 2;
+  const dist = levenshtein(na, nb);
+  // Exact match always counts as duplicate
+  if (dist === 0) return true;
+  // Fuzzy match only for longer words (7+ chars) to avoid catching
+  // genuinely different short answers like "Lenna" vs "Lenny"
+  if (na.length >= 7 && nb.length >= 7 && dist <= 2) return true;
+  return false;
 }
 
 // ═══════════════════════════════════════════
