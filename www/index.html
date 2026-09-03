@@ -1322,8 +1322,8 @@ function toggleFaq(el) {
     if (!timerEl) return;
     timerEl.textContent = val;
     timerEl.classList.remove('amber', 'urgent');
-    if (val <= 10 && val > 5) timerEl.classList.add('amber');
-    if (val <= 5  && val > 0) timerEl.classList.add('urgent');
+    if (val <= 7  && val > 5) timerEl.classList.add('amber');
+    if (val <= 5) timerEl.classList.add('urgent');
   }
 
   function startCountdown(from, onZero) {
