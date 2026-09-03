@@ -1297,7 +1297,7 @@ function toggleFaq(el) {
   const valEls  = fields.map(f => f.querySelector('.gp-val'));
   const timerEl = document.getElementById('gp-timer');
   let catIdx   = 0;
-  let timerVal = 60;
+  let timerVal = 9;
   let roundNum  = 1;
 
   // Countdown timer — resets when a new letter lands
@@ -1354,7 +1354,7 @@ function toggleFaq(el) {
         tile.textContent = finalLetter;
         tile.style.transform = 'scale(1.09)';
         setTimeout(() => { tile.style.transform = ''; }, 260);
-        timerVal = 45 + Math.floor(Math.random() * 16);
+        timerVal = 8 + Math.floor(Math.random() * 5);
         if (timerEl) { timerEl.textContent = timerVal; timerEl.classList.remove('low'); }
         // Small pause so the landed letter registers before answers fill in
         setTimeout(() => revealAnswers(finalLetter), 200);
