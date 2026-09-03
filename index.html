@@ -2110,11 +2110,72 @@ async function advanceGame() {
 }
 
 // ═══════════════════════════════════════════
+// CONFETTI
+// ═══════════════════════════════════════════
+function launchConfetti() {
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9999;';
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const COLS = ['#FF5F6D','#38EF7D','#FFD166','#A29BFE','#00B4CC','#FF8B94','#FFC371'];
+  const SHAPES = ['rect','circle','strip'];
+  const COUNT  = 160;
+  const particles = Array.from({length: COUNT}, () => {
+    const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+    return {
+      x: Math.random() * canvas.width,
+      y: -10 - Math.random() * 200,
+      vx: (Math.random() - 0.5) * 3.5,
+      vy: 2.5 + Math.random() * 3.5,
+      rot: Math.random() * Math.PI * 2,
+      rotV: (Math.random() - 0.5) * 0.18,
+      w: shape === 'strip' ? 3 : 7 + Math.random() * 6,
+      h: shape === 'strip' ? 14 + Math.random() * 8 : 7 + Math.random() * 6,
+      col: COLS[Math.floor(Math.random() * COLS.length)],
+      shape, alpha: 1
+    };
+  });
+  let frame = 0;
+  const TOTAL = 210;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const fade = frame > 150 ? 1 - (frame - 150) / 60 : 1;
+    particles.forEach(p => {
+      p.x   += p.vx;
+      p.y   += p.vy;
+      p.rot += p.rotV;
+      p.vy  += 0.07; // gravity
+      p.vx  *= 0.995;
+      ctx.save();
+      ctx.globalAlpha = fade * p.alpha;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.col;
+      if (p.shape === 'circle') {
+        ctx.beginPath();
+        ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      }
+      ctx.restore();
+    });
+    frame++;
+    if (frame < TOTAL) requestAnimationFrame(draw);
+    else canvas.remove();
+  }
+  requestAnimationFrame(draw);
+}
+
+// ═══════════════════════════════════════════
 // FINAL SCREEN
 // ═══════════════════════════════════════════
 async function showFinal() {
   showScreen('final');
   sfx.winner();
+  launchConfetti();
   await refreshPlayers(); // ensure final scores are up to date
   document.getElementById('final-host-btn').hidden = !S.isHost;
   document.getElementById('final-wait').hidden = S.isHost;

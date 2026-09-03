@@ -683,6 +683,16 @@ footer a:hover { color: var(--text); }
   50%  { transform: translateY(-28px) rotate(6deg); }
   100% { transform: translateY(0px) rotate(-4deg); }
 }
+@keyframes sparklePop {
+  0%   { transform: scale(1);    filter: brightness(1); }
+  30%  { transform: scale(1.55); filter: brightness(2.2) drop-shadow(0 0 7px currentColor); }
+  70%  { transform: scale(1.35); filter: brightness(1.8) drop-shadow(0 0 4px currentColor); }
+  100% { transform: scale(1);    filter: brightness(1); }
+}
+@keyframes sparkDot {
+  0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0); }
+}
 
 @keyframes waveBounce {
   0%, 100% { transform: translateY(0); }
@@ -1212,7 +1222,32 @@ function toggleFaq(el) {
     el.textContent = FL[Math.floor(Math.random() * FL.length)];
     el.style.cssText = `position:absolute;left:${x}%;top:${y}%;font-family:'Fredoka One',cursive;font-size:${size}px;color:${color};opacity:${(0.10 + Math.random() * 0.20).toFixed(2)};animation:floatLetter ${dur}s ${delay}s ease-in-out infinite;user-select:none;`;
     wrap.appendChild(el);
+    el.dataset.baseAnim = el.style.animation;
   }
+
+  // ── Sparkle: random letter glows + mini particles every 2.4s ──
+  const flEls = Array.from(wrap.children);
+  const SPARK_COLS = ['#FF5F6D','#38EF7D','#FFD166','#A29BFE','#00B4CC'];
+  function doSparkle() {
+    const el = flEls[Math.floor(Math.random() * flEls.length)];
+    const baseAnim = el.dataset.baseAnim;
+    el.style.animation = 'sparklePop 700ms ease-out forwards';
+    setTimeout(() => { el.style.animation = baseAnim; }, 720);
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top  + rect.height / 2;
+    for (let s = 0; s < 4; s++) {
+      const dot = document.createElement('div');
+      const angle = (s / 4) * Math.PI * 2 + Math.random() * 0.6;
+      const dist  = 18 + Math.random() * 14;
+      const col   = SPARK_COLS[Math.floor(Math.random() * SPARK_COLS.length)];
+      dot.style.cssText = `position:fixed;left:${cx}px;top:${cy}px;width:5px;height:5px;border-radius:50%;background:${col};pointer-events:none;z-index:1;--dx:${Math.round(Math.cos(angle)*dist)}px;--dy:${Math.round(Math.sin(angle)*dist)}px;animation:sparkDot 600ms ease-out forwards;`;
+      document.body.appendChild(dot);
+      setTimeout(() => dot.remove(), 660);
+    }
+  }
+  setTimeout(doSparkle, 900);
+  setInterval(doSparkle, 2400);
 })();
 
 // ── Letter tile animation ─────────────────────────────────
