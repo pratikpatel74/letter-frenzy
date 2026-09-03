@@ -742,6 +742,14 @@ window.addEventListener('DOMContentLoaded', () => {
     window.visualViewport.addEventListener('resize', onViewportResize);
     window.visualViewport.addEventListener('scroll', onViewportResize);
   }
+  // Pre-fill saved player name
+  try {
+    const saved = localStorage.getItem('lf_player_name');
+    if (saved) {
+      document.getElementById('setup-name').value = saved;
+      document.getElementById('join-name').value = saved;
+    }
+  } catch(e) {}
   tryReconnect();
   // Init audio on first user gesture
   const _initAudio = () => {
@@ -1102,6 +1110,7 @@ async function createRoom() {
     }).select().single();
     if (pe) throw pe;
 
+    try { localStorage.setItem('lf_player_name', name); } catch(e) {}
     S.playerId = player.id; S.roomId = room.id; S.roomCode = code;
     S.isHost = true; S.room = room;
     sessionStorage.setItem('lf_pid', player.id);
@@ -1154,6 +1163,7 @@ async function joinRoom() {
     }).select().single();
     if (pe) throw pe;
 
+    try { localStorage.setItem('lf_player_name', name); } catch(e) {}
     S.playerId = player.id; S.roomId = room.id; S.roomCode = code;
     S.isHost = false; S.room = room;
     sessionStorage.setItem('lf_pid', player.id);
